@@ -1,29 +1,29 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Platform,
-  StatusBar,
-  KeyboardAvoidingView,
   Vibration,
-  ScrollView,
-  SafeAreaView,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Renamed from 'MaterialIcons' to 'Icon' for consistency
-import { useCallback, useEffect, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { AppButtons, AppColors, AppGradients } from '../../../assets/constants/colors.js';
 import apiService from '../../APIservices';
-import { AppGradients, AppColors, AppButtons } from '../../../assets/constants/colors.js';
 import CustomAlertDialog from '../../Customs/CustomDialog.js'; // Import your custom dialog
 
 const moment = require('moment-timezone');
@@ -792,17 +792,17 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Ensure modal overlay has background
   },
   teamModalContentContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   teamModalContent: {
     backgroundColor: AppColors.white,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
     padding: 25,
     maxHeight: '80%',
     shadowColor: AppColors.black,

@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
-  Image,
   Alert,
-  SafeAreaView,
-  StatusBar,
-  Keyboard,
-  TouchableWithoutFeedback,
   Animated,
   Easing,
-  ScrollView,
+  FlatList,
+  Image,
+  Keyboard,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo-linear-gradient';
 import apiService from '../APIservices';
 
 const AddPlayersToTeam = () => {
@@ -235,7 +234,7 @@ const AddPlayersToTeam = () => {
           </View>
 
           {/* Search */}
-          <View style={{ position: 'relative', marginBottom: 10 }}>
+          <View style={{ position: 'relative', marginTop: 10 }}>
             <View style={styles.searchContainer}>
               <Ionicons name="search" size={20} color="#4A90E2" />
               <TextInput

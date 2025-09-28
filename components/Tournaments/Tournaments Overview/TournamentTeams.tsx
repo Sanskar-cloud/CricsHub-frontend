@@ -1,27 +1,27 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  Modal,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Pressable,
-  Image,
   Animated,
   Dimensions,
+  FlatList,
+  Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
+  RefreshControl,
   SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
-  RefreshControl
+  View
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiService from '../../APIservices';
 
 const { width, height } = Dimensions.get('window');
@@ -354,7 +354,7 @@ const Teams = ({ id, isCreator }) => {
           </TouchableWithoutFeedback>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ position: 'absolute', bottom: 0, width: '100%' }}
+            style={{ position: 'absolute', top: 0, width: '100%' }}
           >
             <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
               <View style={styles.modalHeader}>
@@ -583,8 +583,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -5 },

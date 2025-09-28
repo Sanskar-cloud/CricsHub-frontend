@@ -1,29 +1,28 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Platform,
-  StatusBar,
-  KeyboardAvoidingView,
   Vibration,
-  Alert,
-  SafeAreaView,
+  View
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppNavigation } from '../../NavigationService';
+import { AppColors, AppGradients } from '../../../assets/constants/colors.js';
 import apiService from '../../APIservices';
-import { AppGradients, AppColors, AppButtons } from '../../../assets/constants/colors.js';
+import { useAppNavigation } from '../../NavigationService';
 
 const moment = require('moment-timezone');
 
@@ -564,17 +563,17 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     backgroundColor: AppColors.overlay,
   },
   teamModalContentContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   teamModalContent: {
     backgroundColor: AppColors.white,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
     padding: 25,
     maxHeight: '80%',
     shadowColor: AppColors.black,
