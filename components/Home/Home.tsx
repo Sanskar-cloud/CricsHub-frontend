@@ -1,26 +1,26 @@
-import React, { useRef, useEffect, useState } from "react";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
+  Alert,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Animated,
-  FlatList,
-  Dimensions,
-  Image,
   TouchableWithoutFeedback,
-  Alert,
-  Platform,
-  Modal,
-  ScrollView,
+  View,
 } from "react-native";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useAppNavigation } from '../NavigationService';
-import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 // Assuming AppGradients and AppColors are available here
-import { AppGradients, AppColors } from "../../assets/constants/colors.js";
+import { AppColors, AppGradients } from "../../assets/constants/colors.js";
 
 const { width } = Dimensions.get("window");
 
@@ -98,18 +98,18 @@ const Home = () => {
       navigateTo: "CreateTeam",
       icon: "group",
     },
-    {
-      title: "Fantasy Cricket",
-      buttonText: "Explore",
-      navigateTo: "FantasyCricketScreen",
-      icon: "bar-chart",
-    },
+    // {
+    //   title: "Fantasy Cricket",
+    //   buttonText: "Explore",
+    //   navigateTo: "FantasyCricketScreen",
+    //   icon: "bar-chart",
+    // },
     {
       title: "Stream Match",
       buttonText: "Stream Now",
       navigateTo: "StreamMatch",
       icon: "live-tv",
-      isFullWidth: true,
+      // isFullWidth: true,
     },
   ];
 
