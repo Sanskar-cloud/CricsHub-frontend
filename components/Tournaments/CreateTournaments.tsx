@@ -1,34 +1,32 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import moment from "moment";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Easing,
+  FlatList,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StatusBar as RNStatusBar,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Image,
-  ScrollView,
-  ActivityIndicator,
-  Dimensions,
-  Platform,
-  SafeAreaView,
-  StatusBar as RNStatusBar,
-  Keyboard,
-  KeyboardAvoidingView,
-  Animated,
-  Easing,
-  Modal,
-  FlatList,
+  View
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
-import moment from "moment";
-import * as MediaLibrary from 'expo-media-library';
 import { useAppNavigation } from '../NavigationService';
-import apiService from '../APIservices';
+import ensureMediaPermission from '../Permissions';
 
 // Color constants for consistency
 const AppColors = {
@@ -288,11 +286,9 @@ const CreateTournament = () => {
   }, [tournamentName, startDate, endDate, format, overs, ballType, banner, getUserUUID, navigation]);
 
   const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      showNotification('We need access to your photos to select a banner image.', 'error');
-      return;
-    }
+    const hasPermission = await ensureMediaPermission();
+if (!hasPermission) return;
+
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,

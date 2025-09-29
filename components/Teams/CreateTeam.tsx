@@ -1,21 +1,20 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  View,
+  Alert,
+  Image,
+  Platform,
+  StatusBar as RNStatusBar,
+  SafeAreaView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-  SafeAreaView,
-  StatusBar as RNStatusBar,
-  Platform,
-  Linking, // Import Linking for redirecting to settings
+  View
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
 
 const AppColors = {
   white: "#FFFFFF",
@@ -34,28 +33,19 @@ const CreateTeam = () => {
   const navigation = useNavigation();
 
   const pickImage = async () => {
-    // 1. Request Media Library permission status
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
-      // 2. Permission Denied: Show a custom dialogue
-      Alert.alert(
-        'Gallery Access Required',
-        'We need access to your photo library to upload a team logo. Please enable this permission in your device settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Open Settings',
-            onPress: () => {
-              // Redirect user to app settings (works reliably on iOS/Android)
-              Linking.openSettings();
-            },
-            style: 'default',
-          },
-        ]
-      );
-      return;
-    }
+
+//  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+//   if (status !== 'granted') {
+//     Alert.alert(
+//       "Permission Required",
+//       "Please allow photo access to select a team logo."
+//     );
+//     return;
+//   }
+        const hasPermission = await ensureMediaPermission();
+if (!hasPermission) return;
 
     // 3. Permission Granted: Open gallery
     const result = await ImagePicker.launchImageLibraryAsync({

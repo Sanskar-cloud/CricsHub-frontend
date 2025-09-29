@@ -1,29 +1,29 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Alert,
-  TextInput,
-  Pressable,
-  Platform,
-  StatusBar as RNStatusBar,
-  Dimensions,
-  Animated,
-  SafeAreaView,
-  FlatList,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppNavigation } from '../NavigationService';
 import { useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  StatusBar as RNStatusBar,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
-import { AppGradients, AppColors } from '../../assets/constants/colors.js';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { AppColors, AppGradients } from '../../assets/constants/colors.js';
 import apiService from '../APIservices';
+import { useAppNavigation } from '../NavigationService';
 
 const { width } = Dimensions.get('window');
 
@@ -440,13 +440,13 @@ const Tournaments = () => {
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.headerContentRow}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
           >
             <Icon name="arrow-back" size={28} color={AppColors.white} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <View style={styles.searchBarContainer}>
             <Icon name="search" size={20} color={AppColors.white} style={styles.searchIcon} />

@@ -1,26 +1,27 @@
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
-  View,
-  ActivityIndicator,
-  SafeAreaView,
   TextInput,
   TouchableOpacity,
-  Image,
-  ScrollView,
-  Animated,
-  Easing,
-  Dimensions,
-  StatusBar,
-  Modal,
   TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-import * as ImagePicker from "expo-image-picker";
 import apiService from "../APIservices";
+import ensureMediaPermission from "../Permissions";
 
 const { width, height } = Dimensions.get("window");
 const ROLE_OPTIONS = ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"];
@@ -364,11 +365,8 @@ const Settings = ({ navigation }) => {
 
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        showNotification("Photo access permission required", "error");
-        return;
-      }
+       const hasPermission = await ensureMediaPermission();
+if (!hasPermission) return;
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
