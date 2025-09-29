@@ -129,7 +129,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>7. Children's Privacy</Text>
               <Text style={styles.sectionText}>
-                Our services are not directed to children under 13. We do not knowingly collect personal information from children without parental consent.
+                Our services are not directed to children under 18. We do not knowingly collect personal information from children without parental consent.
               </Text>
             </View>
 
