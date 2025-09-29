@@ -204,6 +204,9 @@ const Settings = ({ navigation }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [notification, setNotification] = useState({
     visible: false,
     message: "",
@@ -247,6 +250,34 @@ const Settings = ({ navigation }) => {
       showNotification(err.message || "Failed to send OTP", "error");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      const response = await apiService({
+        endpoint: "profile",
+        method: "DELETE",
+      });
+
+      if (!response.success) {
+        throw new Error(response.error?.message || "Failed to delete account");
+      }
+
+      showNotification("Account deleted successfully", "success");
+      setDeleteModalVisible(false);
+
+      // redirect to login (or onboarding)
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+    } catch (err) {
+      console.error("Delete account error:", err);
+      showNotification(err.message || "Failed to delete account", "error");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -365,8 +396,8 @@ const Settings = ({ navigation }) => {
 
   const pickImage = async () => {
     try {
-       const hasPermission = await ensureMediaPermission();
-if (!hasPermission) return;
+      const hasPermission = await ensureMediaPermission();
+      if (!hasPermission) return;
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -629,7 +660,53 @@ if (!hasPermission) return;
                 </View>
                 <Icon name="chevron-right" size={22} color="#fff" />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteAccountButton}
+                onPress={() => setDeleteModalVisible(true)}
+              >
+                <View style={styles.deleteAccountContent}>
+                  <Icon name="trash-2" size={22} color="#fff" />
+                  <Text style={styles.deleteAccountText}>Delete Account</Text>
+                </View>
+              </TouchableOpacity>
             </View>
+            <Modal
+              transparent
+              visible={deleteModalVisible}
+              animationType="fade"
+              onRequestClose={() => setDeleteModalVisible(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.deleteModalBox}>
+                  <Text style={styles.deleteModalTitle}>Delete Account</Text>
+                  <Text style={styles.deleteModalMessage}>
+                    Are you sure you want to permanently delete your account?
+                    This action cannot be undone.
+                  </Text>
+
+                  <View style={styles.deleteModalActions}>
+                    <TouchableOpacity
+                      style={[styles.deleteActionButton, styles.cancelDeleteButton]}
+                      onPress={() => setDeleteModalVisible(false)}
+                    >
+                      <Text style={styles.cancelDeleteText}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.deleteActionButton, styles.confirmDeleteButton]}
+                      onPress={handleDeleteAccount}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.confirmDeleteText}>Delete</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </ScrollView>
         </KeyboardAvoidingView>
       )}
@@ -891,7 +968,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
   },
   modalContent: {
     backgroundColor: "white",
@@ -938,6 +1015,77 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  deleteAccountButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E74C3C",
+    padding: 16,
+    borderRadius: 16,
+    width: "100%",
+    marginTop: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  deleteAccountContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  deleteAccountText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 12,
+  },
+
+  deleteModalBox: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    marginHorizontal: 30,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  deleteModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#E74C3C",
+  },
+  deleteModalMessage: {
+    fontSize: 15,
+    color: "#333",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  deleteModalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  deleteActionButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  cancelDeleteButton: {
+    backgroundColor: "#ccc",
+  },
+  confirmDeleteButton: {
+    backgroundColor: "#E74C3C",
+  },
+  cancelDeleteText: {
+    color: "#333",
+    fontWeight: "600",
+  },
+  confirmDeleteText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });
 

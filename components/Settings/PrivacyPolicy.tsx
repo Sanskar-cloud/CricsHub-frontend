@@ -1,16 +1,16 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  Platform,
   Linking,
-  TouchableOpacity
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { AppColors } from '../../assets/constants/colors.js';
 
 const PrivacyPolicyScreen = ({ navigation }) => {
@@ -46,7 +46,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.content}>
             <Text style={styles.lastUpdated}>Last Updated: January 2025</Text>
-            
+
             <Text style={styles.introText}>
               At CricsHub, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your information when you use our cricket tournament management application.
             </Text>
@@ -110,21 +110,38 @@ const PrivacyPolicyScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>6. Children's Privacy</Text>
+              <Text style={styles.sectionTitle}>6. Account Deletion</Text>
+              <Text style={styles.sectionText}>
+                If you wish to delete your account, please follow these steps:
+              </Text>
+              <View style={styles.list}>
+                <Text style={styles.listItem}>• Go to your Profile section</Text>
+                <Text style={styles.listItem}>• Tap on the "Delete Account" button</Text>
+                <Text style={styles.listItem}>• A confirmation pop-up will appear</Text>
+                <Text style={styles.listItem}>• Confirm your choice to permanently delete your account</Text>
+                <Text style={styles.listItem}>• Once confirmed, your profile and associated data will be deleted</Text>
+              </View>
+              <Text style={styles.sectionText}>
+                Please note: Account deletion is permanent and cannot be undone. All your data will be removed from our systems.
+              </Text>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>7. Children's Privacy</Text>
               <Text style={styles.sectionText}>
                 Our services are not directed to children under 13. We do not knowingly collect personal information from children without parental consent.
               </Text>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>7. Changes to This Policy</Text>
+              <Text style={styles.sectionTitle}>8. Changes to This Policy</Text>
               <Text style={styles.sectionText}>
                 We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.
               </Text>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>8. Contact Us</Text>
+              <Text style={styles.sectionTitle}>9. Contact Us</Text>
               <Text style={styles.sectionText}>
                 If you have any questions about this Privacy Policy, please contact us:
               </Text>
