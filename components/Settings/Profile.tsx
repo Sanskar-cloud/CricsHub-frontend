@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
@@ -264,7 +265,7 @@ const Settings = ({ navigation }) => {
       if (!response.success) {
         throw new Error(response.error?.message || "Failed to delete account");
       }
-
+      await AsyncStorage.removeItem('jwtToken');
       showNotification("Account deleted successfully", "success");
       setDeleteModalVisible(false);
 

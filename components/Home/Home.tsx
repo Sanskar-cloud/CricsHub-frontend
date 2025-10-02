@@ -98,12 +98,12 @@ const Home = () => {
       navigateTo: "CreateTeam",
       icon: "group",
     },
-    // {
-    //   title: "Fantasy Cricket",
-    //   buttonText: "Explore",
-    //   navigateTo: "FantasyCricketScreen",
-    //   icon: "bar-chart",
-    // },
+    {
+      title: "CricsHub Playground",
+      buttonText: "Explore",
+      navigateTo: "FantasyCricketScreen",
+      icon: "bar-chart",
+    },
     {
       title: "Stream Match",
       buttonText: "Stream Now",
@@ -318,7 +318,7 @@ const Home = () => {
 
             <View style={styles.modalHeader}>
               <Ionicons name="rocket-outline" size={40} color={AppColors.white} />
-              <Text style={styles.modalTitle}>Get Ready for Fantasy Cricket!</Text>
+              <Text style={styles.modalTitle}>Get Ready for CricsHub Playground!</Text>
             </View>
 
             <View style={styles.modalBody}>
@@ -518,7 +518,7 @@ const Home = () => {
                         onPressIn={() => handleButtonPressIn(index)}
                         onPressOut={() => handleButtonPressOut(index)}
                         onPress={() => {
-                          if (item.title === "Fantasy Cricket") {
+                          if (item.title === "CricsHub Playground") {
                             setShowFantasyPopup(true);
                           } else {
                             navigation.navigate(item.navigateTo);
