@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import ensureMediaPermission from '../Permissions';
 
 const AppColors = {
   white: "#FFFFFF",

@@ -2,7 +2,7 @@
   "expo": {
     "name": "CricsHub",
     "slug": "CricsHub",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "cricshub",
@@ -17,8 +17,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow CricsHub to access your photos.",
-        "NSPhotoLibraryAddUsageDescription": "Allow CricsHub to save photos to your library."
-      }
+        "NSPhotoLibraryAddUsageDescription": "Allow CricsHub to save photos to your library.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "dev.cricshub.team"
     },
     "android": {
       "adaptiveIcon": {
@@ -59,12 +61,13 @@
       "BASE_URL": "https://app.cricshub.com/api/v1",
       "router": {},
       "eas": {
-        "projectId": "4137fe2b-e651-496d-bd74-2a8aedc79bcf"
+        "projectId": "13958a67-33a5-4e58-95ba-4fe4e767f982"
       }
     },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "owner": "jharahul_rj"
   }
 }

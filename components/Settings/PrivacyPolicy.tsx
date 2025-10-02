@@ -118,8 +118,10 @@ const PrivacyPolicyScreen = ({ navigation }) => {
                 <Text style={styles.listItem}>• Go to your Profile section</Text>
                 <Text style={styles.listItem}>• Tap on the "Delete Account" button</Text>
                 <Text style={styles.listItem}>• A confirmation pop-up will appear</Text>
-                <Text style={styles.listItem}>• Confirm your choice to permanently delete your account</Text>
-                <Text style={styles.listItem}>• Once confirmed, your profile and associated data will be deleted</Text>
+                <Text style={styles.listItem}>• Confirm your choice to  deactivate your account</Text>
+                <Text style={styles.listItem}>• Once your account is deactivated,it will be deactivated for 60 days.</Text>
+                <Text style={styles.listItem}>• If you wish,within 60 days you can reactivate your account by logging into the app again.</Text>
+                <Text style={styles.listItem}>• After 60 days, your profile and associated data will be deleted</Text>
               </View>
               <Text style={styles.sectionText}>
                 Please note: Account deletion is permanent and cannot be undone. All your data will be removed from our systems.

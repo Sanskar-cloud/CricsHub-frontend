@@ -1,25 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
+  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
   Animated,
   Dimensions,
   Easing,
   Image,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../APIservices';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient'; 
 
 const { height } = Dimensions.get('window');
 
@@ -178,27 +177,30 @@ const Otp = ({ route, navigation }) => {
         },
       });
 
-      if (response.success) {
-        Alert.alert('Success', 'OTP verified successfully!');
+     if (response.success) {
+  Alert.alert('Success', 'OTP verified successfully!');
 
-        const token = response.data?.data?.token;
-        const userId = response.data?.data?.user?.id;
-        const name = response.data?.data?.user?.name;
-        const isOldUser = response.data?.data?.user?.email;
+  const backendData = response.data.data; // unwrap inner backend "data"
 
-        if (!token || !userId) {
-          throw new Error('Token or User ID is missing in the API response.');
-        }
+  const token = backendData.token;
+  const userId = backendData.user?.id;
+  const name = backendData.user?.name;
+  const isOldUser = backendData.user?.email;
 
-        await saveToken(token);
-        await AsyncStorage.setItem('userUUID', userId);
-        await AsyncStorage.setItem('userName', name || ''); // Ensure name is saved, or empty string
+  if (!token || !userId) {
+    throw new Error('Token or User ID is missing in the API response.');
+  }
 
-        if (isOldUser) {
-          navigation.replace('Main');
-        } else {
-          navigation.replace('registerForm');
-        }
+  await saveToken(token);
+  await AsyncStorage.setItem('userUUID', userId);
+  await AsyncStorage.setItem('userName', name || '');
+
+  if (isOldUser) {
+    navigation.replace('Main'); // fixed typo here too
+  } else {
+    navigation.replace('registerForm');
+  }
+
       } else {
         if (response.status === 401) {
           Alert.alert(

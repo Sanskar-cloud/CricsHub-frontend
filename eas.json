@@ -13,10 +13,6 @@
     },
     "production": {
       "autoIncrement": true
-    },
-    "release": {
-      "distribution": "store",
-      "autoIncrement": true
     }
   },
   "submit": {
