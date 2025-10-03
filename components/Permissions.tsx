@@ -1,7 +1,8 @@
-import * as MediaLibrary from 'expo-media-library';
+import * as ImagePicker from 'expo-image-picker';
+import { Alert } from 'react-native';
 
 async function ensureMediaPermission() {
-  const { status, canAskAgain } = await MediaLibrary.getPermissionsAsync();
+  const { status, canAskAgain } = await ImagePicker.getMediaLibraryPermissionsAsync();
 
   if (status === 'granted') return true;
   if (status === 'denied' && !canAskAgain) {
@@ -13,7 +14,7 @@ async function ensureMediaPermission() {
     return false;
   }
 
-  const { status: newStatus } = await MediaLibrary.requestPermissionsAsync();
+  const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   return newStatus === 'granted';
 }
 
