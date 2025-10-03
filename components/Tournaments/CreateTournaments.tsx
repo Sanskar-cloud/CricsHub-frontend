@@ -287,8 +287,7 @@ const CreateTournament = () => {
 
   const pickImage = useCallback(async () => {
     const hasPermission = await ensureMediaPermission();
-if (!hasPermission) return;
-
+    if (!hasPermission) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,

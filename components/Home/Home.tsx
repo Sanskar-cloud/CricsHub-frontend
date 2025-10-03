@@ -21,6 +21,7 @@ import {
 import { useAppNavigation } from '../NavigationService';
 // Assuming AppGradients and AppColors are available here
 import { AppColors, AppGradients } from "../../assets/constants/colors.js";
+import ensureMediaPermission from "../Permissions";
 
 const { width } = Dimensions.get("window");
 
@@ -46,7 +47,13 @@ const Home = () => {
         console.error("Failed to fetch user name:", error);
       }
     };
+
+    const askPermissions = async () => {
+      await ensureMediaPermission();
+    }
+
     fetchUserName();
+    askPermissions();
   }, []);
 
   useEffect(() => {

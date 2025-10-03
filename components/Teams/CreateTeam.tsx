@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import ensureMediaPermission from '../Permissions';
 
 const AppColors = {
   white: "#FFFFFF",
@@ -35,17 +36,17 @@ const CreateTeam = () => {
   const pickImage = async () => {
 
 
-//  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    //  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-//   if (status !== 'granted') {
-//     Alert.alert(
-//       "Permission Required",
-//       "Please allow photo access to select a team logo."
-//     );
-//     return;
-//   }
-        const hasPermission = await ensureMediaPermission();
-if (!hasPermission) return;
+    //   if (status !== 'granted') {
+    //     Alert.alert(
+    //       "Permission Required",
+    //       "Please allow photo access to select a team logo."
+    //     );
+    //     return;
+    //   }
+    const hasPermission = await ensureMediaPermission();
+    if (!hasPermission) return;
 
     // 3. Permission Granted: Open gallery
     const result = await ImagePicker.launchImageLibraryAsync({
