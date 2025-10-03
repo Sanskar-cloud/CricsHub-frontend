@@ -1,22 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-  Dimensions,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import apiService from '../../APIservices';
 
 const { width } = Dimensions.get('window');
+
+// --- APP COLORS (Enhanced Palette) ---
+const AppColors = {
+  primary: '#0575E6', // Vibrant Blue
+  secondary: '#00D2D3', // Teal Accent (for icons/highlights)
+  background: '#F8F9FA', // Light page background
+  card: '#FFFFFF',
+  textDark: '#212529',
+  textLight: '#6C757D',
+  border: '#DEE2E6',
+  error: '#DC3545',
+  success: '#28A745',
+  shadowColor: 'rgba(0,0,0,0.1)',
+};
 
 const Info = ({ id, isCreator }) => {
   const [loading, setLoading] = useState(false);
@@ -51,7 +66,8 @@ const Info = ({ id, isCreator }) => {
         setTournamentDetails(data);
         setEditedDetails({
           name: data.name || '',
-          type: String(data.type) || '',
+          // Ensure type is string for TextInput
+          type: String(data.type) || '', 
           ballType: data.ballType || '',
           venues: data.venues || [],
           format: data.format || '',
@@ -101,6 +117,7 @@ const Info = ({ id, isCreator }) => {
         name: editedDetails.name,
         startDate: formattedStartDate,
         endDate: formattedEndDate,
+        // Ensure type is sent as a number
         type: Number(editedDetails.type),
         ballType: editedDetails.ballType,
         venues: cleanVenues,
@@ -115,6 +132,7 @@ const Info = ({ id, isCreator }) => {
 
       if (response.success) {
         setEditingTournament(false);
+        setError(null); // Clear error on success
         await fetchTournamentDetails(id);
       } else {
         setError(response.error?.message || 'Failed to update tournament details');
@@ -130,19 +148,36 @@ const Info = ({ id, isCreator }) => {
     fetchTournamentDetails(id);
   }, [id]);
 
+  const onDateChange = (isStart) => (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+        isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
+    }
+
+    if (selectedDate) {
+        if (isStart) {
+            setStartDate(selectedDate);
+            if (selectedDate > endDate) {
+                setEndDate(selectedDate);
+            }
+        } else {
+            setEndDate(selectedDate);
+        }
+    }
+  };
+
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {loading ? (
+      {loading && !tournamentDetails ? ( // Show full-screen loader initially
         <View style={styles.centeredContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" style={styles.loader} />
-          {/* <Text style={styles.loadingText}>Loading tournament details...</Text> */}
+          <ActivityIndicator size="large" color={AppColors.primary} style={styles.loader} />
         </View>
-      ) : error ? (
+      ) : error && !tournamentDetails ? ( // Show full-screen error if initial fetch fails
         <View style={styles.centeredContainer}>
-          <Icon name="error-outline" size={50} color="#E74C3C" />
+          <Icon name="error-outline" size={50} color={AppColors.error} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, { width: 'auto' }]}
             onPress={() => fetchTournamentDetails(id)}
           >
             <Text style={styles.buttonText}>Retry</Text>
@@ -156,17 +191,20 @@ const Info = ({ id, isCreator }) => {
               <Text style={styles.title}>{tournamentDetails.name}</Text>
               {isCreator && (
                 <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => setEditingTournament(true)}
+                  style={styles.editButton}
+                  onPress={() => {
+                    setEditingTournament(true);
+                    setError(null); // Clear error when opening modal
+                  }}
                 >
-                  <Icon name="edit" size={22} color="#4A90E2" />
+                  <Icon name="edit" size={20} color={AppColors.primary} />
                 </TouchableOpacity>
               )}
             </View>
 
             <View style={styles.dateLocationContainer}>
               <View style={styles.dateLocationRow}>
-                <Icon name="event" size={16} color="#6c757d" />
+                <Icon name="event" size={16} color={AppColors.textLight} />
                 <Text style={styles.dateLocationText}>
                   {tournamentDetails.startDate
                     ? moment(new Date(tournamentDetails.startDate[0], tournamentDetails.startDate[1] - 1, tournamentDetails.startDate[2])).format('MMM DD, YYYY')
@@ -178,7 +216,7 @@ const Info = ({ id, isCreator }) => {
                 </Text>
               </View>
               <View style={styles.dateLocationRow}>
-                <Icon name="location-on" size={16} color="#6c757d" />
+                <Icon name="location-on" size={16} color={AppColors.textLight} />
                 <Text style={styles.dateLocationText}>
                   {tournamentDetails.venues?.join(", ") || 'Multiple Venues'}
                 </Text>
@@ -190,7 +228,7 @@ const Info = ({ id, isCreator }) => {
             {/* Organizer Card */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Icon name="person" size={20} color="#4A90E2" />
+                <Icon name="person" size={20} color={AppColors.primary} />
                 <Text style={styles.cardTitle}>Organizer</Text>
               </View>
               <Text style={styles.cardContent}>
@@ -201,13 +239,13 @@ const Info = ({ id, isCreator }) => {
             {/* Teams Card */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Icon name="groups" size={20} color="#4A90E2" />
+                <Icon name="groups" size={20} color={AppColors.primary} />
                 <Text style={styles.cardTitle}>Teams</Text>
                 <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => setShowTeamsModal(true)}
                 >
-                  <Icon name="visibility" size={20} color="#4A90E2" />
+                  <Icon name="visibility" size={20} color={AppColors.secondary} />
                 </TouchableOpacity>
               </View>
               <Text style={styles.teamsCount}>
@@ -219,9 +257,10 @@ const Info = ({ id, isCreator }) => {
             <View style={styles.detailsSection}>
               <Text style={styles.sectionTitle}>Tournament Details</Text>
               <View style={styles.detailGrid}>
+                {/* Overs */}
                 <View style={styles.detailItem}>
                   <View style={styles.detailIconContainer}>
-                    <Icon name="timer" size={20} color="#4A90E2" />
+                    <Icon name="timer" size={20} color={AppColors.primary} />
                   </View>
                   <View>
                     <Text style={styles.detailLabel}>Overs</Text>
@@ -229,9 +268,10 @@ const Info = ({ id, isCreator }) => {
                   </View>
                 </View>
 
+                {/* Ball Type */}
                 <View style={styles.detailItem}>
                   <View style={styles.detailIconContainer}>
-                    <Icon name="sports-cricket" size={20} color="#4A90E2" />
+                    <Icon name="sports-cricket" size={20} color={AppColors.primary} />
                   </View>
                   <View>
                     <Text style={styles.detailLabel}>Ball Type</Text>
@@ -239,9 +279,10 @@ const Info = ({ id, isCreator }) => {
                   </View>
                 </View>
 
-                <View style={styles.detailItem}>
+                {/* Format */}
+                <View style={[styles.detailItem, { borderBottomWidth: 0 }]}>
                   <View style={styles.detailIconContainer}>
-                    <Icon name="description" size={20} color="#4A90E2" />
+                    <Icon name="description" size={20} color={AppColors.primary} />
                   </View>
                   <View>
                     <Text style={styles.detailLabel}>Format</Text>
@@ -254,7 +295,7 @@ const Info = ({ id, isCreator }) => {
         </Animated.View>
       ) : (
         <View style={styles.centeredContainer}>
-          <Icon name="info-outline" size={50} color="#95A5A6" />
+          <Icon name="info-outline" size={50} color={AppColors.textLight} />
           <Text style={styles.emptyText}>No tournament details available</Text>
         </View>
       )}
@@ -274,7 +315,7 @@ const Info = ({ id, isCreator }) => {
                 onPress={() => setShowTeamsModal(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#6c757d" />
+                <Icon name="close" size={24} color={AppColors.textLight} />
               </TouchableOpacity>
             </View>
 
@@ -296,7 +337,7 @@ const Info = ({ id, isCreator }) => {
 
               {(!tournamentDetails?.teamNames || tournamentDetails.teamNames.length === 0) && (
                 <View style={styles.noTeamsContainer}>
-                  <Icon name="info-outline" size={40} color="#95a5a6" />
+                  <Icon name="info-outline" size={40} color={AppColors.textLight} />
                   <Text style={styles.noTeamsText}>No teams registered yet</Text>
                 </View>
               )}
@@ -305,7 +346,7 @@ const Info = ({ id, isCreator }) => {
         </View>
       </Modal>
 
-      {/* Editing tournament modal */}
+      {/* Editing tournament modal - Enhanced */}
       <Modal
         visible={editingTournament}
         transparent
@@ -320,16 +361,19 @@ const Info = ({ id, isCreator }) => {
                 onPress={() => setEditingTournament(false)}
                 style={styles.closeButton}
               >
-                <Icon name="close" size={24} color="#6c757d" />
+                <Icon name="close" size={24} color={AppColors.textLight} />
               </TouchableOpacity>
             </View>
+            
+            {error && <Text style={[styles.errorText, { paddingHorizontal: 20 }]}>{error}</Text>}
 
-            <ScrollView style={styles.modalScrollView}>
+            <ScrollView contentContainerStyle={styles.modalScrollView}>
               {/* Tournament Name */}
               <Text style={styles.inputLabel}>Tournament Name</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Tournament Name"
+                placeholderTextColor={AppColors.textLight}
                 value={editedDetails.name}
                 onChangeText={(text) => setEditedDetails({ ...editedDetails, name: text })}
               />
@@ -340,11 +384,12 @@ const Info = ({ id, isCreator }) => {
                 <TouchableOpacity
                   style={[styles.input, styles.dateInput]}
                   onPress={() => setShowStartDatePicker(true)}
+                  disabled={loading}
                 >
                   <Text style={styles.placeholderText}>
                     {moment(startDate).format('MMM D, YYYY')}
                   </Text>
-                  <Icon name="calendar-today" size={20} color="#4A90E2" />
+                  <Icon name="calendar-today" size={20} color={AppColors.primary} />
                 </TouchableOpacity>
 
                 <Text style={styles.dateSeparator}>to</Text>
@@ -352,29 +397,23 @@ const Info = ({ id, isCreator }) => {
                 <TouchableOpacity
                   style={[styles.input, styles.dateInput]}
                   onPress={() => setShowEndDatePicker(true)}
+                  disabled={loading}
                 >
                   <Text style={styles.placeholderText}>
                     {moment(endDate).format('MMM D, YYYY')}
                   </Text>
-                  <Icon name="calendar-today" size={20} color="#4A90E2" />
+                  <Icon name="calendar-today" size={20} color={AppColors.primary} />
                 </TouchableOpacity>
               </View>
-
+              
+              {/* Date Pickers */}
               {showStartDatePicker && (
                 <DateTimePicker
                   value={startDate}
                   mode="date"
                   display="default"
                   minimumDate={new Date()}
-                  onChange={(event, selectedDate) => {
-                    setShowStartDatePicker(false);
-                    if (selectedDate) {
-                      setStartDate(selectedDate);
-                      if (selectedDate > endDate) {
-                        setEndDate(selectedDate);
-                      }
-                    }
-                  }}
+                  onChange={onDateChange(true)}
                 />
               )}
 
@@ -384,10 +423,7 @@ const Info = ({ id, isCreator }) => {
                   mode="date"
                   display="default"
                   minimumDate={startDate}
-                  onChange={(event, selectedDate) => {
-                    setShowEndDatePicker(false);
-                    if (selectedDate) setEndDate(selectedDate);
-                  }}
+                  onChange={onDateChange(false)}
                 />
               )}
 
@@ -395,7 +431,8 @@ const Info = ({ id, isCreator }) => {
               <Text style={styles.inputLabel}>Overs</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Number of overs"
+                placeholder="e.g., 20 or 40"
+                placeholderTextColor={AppColors.textLight}
                 value={editedDetails.type}
                 onChangeText={(text) => setEditedDetails({ ...editedDetails, type: text })}
                 keyboardType="numeric"
@@ -405,7 +442,8 @@ const Info = ({ id, isCreator }) => {
               <Text style={styles.inputLabel}>Ball Type</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Ball type"
+                placeholder="e.g., Leather, Tennis"
+                placeholderTextColor={AppColors.textLight}
                 value={editedDetails.ballType}
                 onChangeText={(text) => setEditedDetails({ ...editedDetails, ballType: text })}
               />
@@ -414,7 +452,8 @@ const Info = ({ id, isCreator }) => {
               <Text style={styles.inputLabel}>Format</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Tournament format"
+                placeholder="e.g., League, Knockout"
+                placeholderTextColor={AppColors.textLight}
                 value={editedDetails.format}
                 onChangeText={(text) => setEditedDetails({ ...editedDetails, format: text })}
               />
@@ -426,6 +465,7 @@ const Info = ({ id, isCreator }) => {
                   key={index}
                   style={styles.input}
                   placeholder={`Venue ${index + 1}`}
+                  placeholderTextColor={AppColors.textLight}
                   value={venue}
                   onChangeText={(text) => {
                     const newVenues = [...editedDetails.venues];
@@ -444,7 +484,7 @@ const Info = ({ id, isCreator }) => {
                   })
                 }
               >
-                <Icon name="add" size={20} color="#4A90E2" />
+                <Icon name="add" size={20} color={AppColors.primary} />
                 <Text style={styles.secondaryButtonText}>Add Venue</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -454,15 +494,17 @@ const Info = ({ id, isCreator }) => {
               <TouchableOpacity
                 style={[styles.actionButton, styles.cancelButton]}
                 onPress={() => setEditingTournament(false)}
+                disabled={loading}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionButton, styles.primaryButton]}
                 onPress={updateTournamentDetails}
+                disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={AppColors.card} />
                 ) : (
                   <Text style={styles.buttonText}>Save Changes</Text>
                 )}
@@ -477,130 +519,147 @@ const Info = ({ id, isCreator }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 10,
     flexGrow: 1,
-    backgroundColor: '#f5f7fa',
-    borderRadius: 10,
-    padding: 10,
+    paddingBottom: 20,
+    backgroundColor: AppColors.background,
   },
   animatedContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.card,
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 10,
+    // Stronger shadow for modern feel
+    shadowColor: AppColors.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   centeredContainer: {
     flex: 1,
+    minHeight: 300,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24
+    padding: 24,
+    backgroundColor: AppColors.card,
+    borderRadius: 12,
+    marginTop: 10,
+
   },
   loader: {
     marginBottom: 16
   },
-  loadingText: {
-    marginTop: 16,
-    color: '#6c757d',
-    fontSize: 16,
-    fontWeight: '500'
-  },
   errorText: {
-    color: '#dc3545',
+    color: AppColors.error,
     marginVertical: 16,
     fontSize: 16,
     textAlign: 'center',
-    fontWeight: '500'
+    fontWeight: '500',
+    paddingHorizontal: 10,
   },
   emptyText: {
-    color: '#6c757d',
+    color: AppColors.textLight,
     fontSize: 16,
     marginTop: 16,
     fontWeight: '500'
   },
+
+  // --- Header Section Styles ---
   headerContainer: {
-    padding: 24,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
-    backgroundColor: '#f9fafb',
+    borderBottomColor: AppColors.border,
+    backgroundColor: AppColors.background, // Light gray header background
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16
+    marginBottom: 10,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#2c3e50',
+    fontSize: 26,
+    fontWeight: '700',
+    color: AppColors.textDark,
     flex: 1,
     marginRight: 12,
+    lineHeight: 32,
   },
-  iconButton: {
-    padding: 4,
+  editButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: AppColors.primary + '10', // Very light primary background
   },
   dateLocationContainer: {
-    marginTop: 8,
+    paddingTop: 10,
   },
   dateLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8
+    marginBottom: 4,
   },
   dateLocationText: {
-    color: '#6c757d',
+    color: AppColors.textLight,
     marginLeft: 8,
-    fontSize: 14
+    fontSize: 15,
+    fontWeight: '500',
   },
   contentContainer: {
-    padding: 20
+    padding: 20,
   },
+
+  // --- Card Styles ---
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.card,
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    borderLeftWidth: 4,
+    borderLeftColor: AppColors.primary,
+    shadowColor: AppColors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: 12,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginLeft: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    color: AppColors.textDark,
+    marginLeft: 10,
     flex: 1,
   },
   cardContent: {
-    fontSize: 15,
-    color: '#495057',
-    lineHeight: 22
+    fontSize: 16,
+    color: AppColors.textDark,
+    fontWeight: '600',
   },
   eyeButton: {
     padding: 4,
   },
   teamsCount: {
-    fontSize: 14,
-    color: '#6c757d',
+    fontSize: 15,
+    color: AppColors.textLight,
+    fontWeight: '500',
   },
+
+  // --- Details Grid Styles ---
   detailsSection: {
-    marginTop: 8
+    marginTop: 8,
+    padding: 10, // Slight padding to separate from cards above
+    borderRadius: 12,
+    backgroundColor: AppColors.background,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 16
+    fontWeight: '700',
+    color: AppColors.textDark,
+    marginBottom: 16,
+    paddingLeft: 10,
   },
   detailGrid: {
     flexDirection: 'column',
@@ -609,59 +668,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    paddingBottom: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
+    borderBottomColor: AppColors.border,
   },
   detailIconContainer: {
-    backgroundColor: '#e8f4fd',
+    backgroundColor: AppColors.primary + '10', // Light primary color background
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12
+    marginRight: 15,
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#6c757d',
-    marginBottom: 4,
-    fontWeight: '500',
+    fontSize: 13,
+    color: AppColors.textLight,
+    marginBottom: 2,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.5
   },
   detailValue: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#2c3e50'
+    fontSize: 16,
+    fontWeight: '700',
+    color: AppColors.textDark,
   },
+
+  // --- Modal Styles ---
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 10,
+    backgroundColor: AppColors.shadowColor + '80', // Darker overlay
   },
   teamsModalContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: AppColors.card,
     borderRadius: 16,
-    width: "95%",
-    maxHeight: "80%",
+    width: "90%",
+    maxHeight: "85%",
     overflow: 'hidden',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowColor: AppColors.textDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 10,
   },
   editModalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: AppColors.card,
+    borderRadius: 16,
     width: "90%",
-    maxHeight: "90%",
+    maxHeight: "95%",
+    shadowColor: AppColors.textDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -669,58 +731,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
+    borderBottomColor: AppColors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#2c3e50",
+    fontSize: 20,
+    fontWeight: "700",
+    color: AppColors.textDark,
   },
   closeButton: {
     padding: 4,
   },
   teamsCountHeader: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: AppColors.background,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
+    borderBottomColor: AppColors.border,
   },
   teamsCountText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#495057',
+    color: AppColors.textDark,
     textAlign: 'center',
   },
   teamsList: {
-    padding: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
   },
   teamListItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f3f5',
+    borderBottomColor: AppColors.border + '50',
   },
   teamNumber: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#e8f4fd',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AppColors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   teamNumberText: {
-    color: '#4A90E2',
-    fontWeight: '600',
+    color: AppColors.card,
+    fontWeight: '700',
     fontSize: 14,
   },
   teamListName: {
     fontSize: 16,
-    color: '#2c3e50',
-    fontWeight: '500',
+    color: AppColors.textDark,
+    fontWeight: '600',
   },
   noTeamsContainer: {
     alignItems: 'center',
@@ -729,30 +792,39 @@ const styles = StyleSheet.create({
   },
   noTeamsText: {
     textAlign: 'center',
-    color: '#6c757d',
+    color: AppColors.textLight,
     fontSize: 16,
     marginTop: 12,
     fontWeight: '500',
   },
+
+  // --- Edit Modal Inputs ---
   modalScrollView: {
-    padding: 20,
-    maxHeight: '70%',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#495057',
+    fontSize: 15,
+    fontWeight: '600',
+    color: AppColors.textDark,
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#dee2e6",
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 15,
-    backgroundColor: "#f9f9f9",
+    borderColor: AppColors.border,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    color: AppColors.textDark,
+    backgroundColor: AppColors.card,
     marginBottom: 12,
+    // Slight inner shadow for depth
+    shadowColor: AppColors.shadowColor,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   dateRow: {
     flexDirection: "row",
@@ -764,68 +836,75 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#f9f9f9",
+    paddingVertical: 14,
   },
   dateSeparator: {
     marginHorizontal: 8,
-    fontWeight: "500",
-    color: "#495057",
+    fontWeight: "600",
+    color: AppColors.textLight,
+    fontSize: 15,
   },
   placeholderText: {
-    fontSize: 15,
-    color: "#2c3e50",
+    fontSize: 16,
+    color: AppColors.textDark,
+    fontWeight: '500',
   },
   primaryButton: {
-    backgroundColor: "#4A90E2",
-    paddingVertical: 12,
-    borderRadius: 6,
+    backgroundColor: AppColors.primary,
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    marginTop: 16,
     paddingHorizontal: 20,
   },
   secondaryButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#e8f4fd",
+    backgroundColor: AppColors.secondary + '15',
     paddingVertical: 12,
-    borderRadius: 6,
+    borderRadius: 8,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: AppColors.secondary + '50',
   },
   secondaryButtonText: {
-    color: "#4A90E2",
+    color: AppColors.primary,
     marginLeft: 6,
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: 15,
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "500",
-    fontSize: 15,
+    color: AppColors.card,
+    fontWeight: "600",
+    fontSize: 16,
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#eaeaea',
+    borderTopColor: AppColors.border,
+    backgroundColor: AppColors.background,
   },
   actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 8,
     marginLeft: 10,
     minWidth: 100,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: "#f1f3f5",
+    backgroundColor: AppColors.background,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   cancelButtonText: {
-    fontWeight: "500",
-    fontSize: 15,
-    color: "#6c757d",
+    fontWeight: "600",
+    fontSize: 16,
+    color: AppColors.textDark,
   },
 });
 

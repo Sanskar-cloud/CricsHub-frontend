@@ -6,6 +6,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -26,17 +27,20 @@ import apiService from '../../APIservices';
 
 const { width, height } = Dimensions.get('window');
 
-// A common color palette for the app
-const colors = {
+// Enhanced Color Palette
+const AppColors = {
   background: '#F0F2F5',
   surface: '#FFFFFF',
-  text: '#1A237E',
-  textSecondary: '#6A7382',
-  accent: '#007AFF', // A vibrant blue
-  accentLight: '#E8F5FF',
-  danger: '#FF3B30',
-  border: '#E0E0E0',
-  placeholder: '#9E9E9E',
+  text: '#1F2937', 
+  textSecondary: '#6B7280',
+  primary: '#10B981', // Emerald Green for positive actions
+  primaryDark: '#047857',
+  accent: '#3B82F6', // Blue accent for visibility/secondary action
+  accentLight: '#BFDBFE', 
+  danger: '#EF4444',
+  border: '#E5E7EB',
+  placeholder: '#9CA3AF',
+  shadowColor: 'rgba(0, 0, 0, 0.1)',
 };
 
 function debounce(func, delay) {
@@ -60,7 +64,8 @@ const Teams = ({ id, isCreator }) => {
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const slideAnim = useRef(new Animated.Value(height)).current; // Adjusted initial value
+  const slideAnim = useRef(new Animated.Value(0)).current; 
+  const modalHeight = height * 0.7; 
 
   const fetchTeams = async (id) => {
     try {
@@ -123,6 +128,7 @@ const Teams = ({ id, isCreator }) => {
   };
 
   const addNewTeam = async (teamid) => {
+    Keyboard.dismiss();
     try {
       setIsAddingTeam(true);
       setLoading({ key: 'Add', value: true });
@@ -150,7 +156,7 @@ const Teams = ({ id, isCreator }) => {
 
   const deleteTeamHandler = async (teamId) => {
     try {
-      setLoading({ key: `Delete-${teamId}`, value: true }); // Unique key for deletion
+      setLoading({ key: `Delete-${teamId}`, value: true }); 
       const response = await apiService({
         endpoint: `tournaments/${id}/remove-teams`,
         method: 'POST',
@@ -163,7 +169,7 @@ const Teams = ({ id, isCreator }) => {
       setError("Couldn't delete team");
     } finally {
       await fetchTeams(id);
-      setLoading({ key: '', value: false }); // Reset loading
+      setLoading({ key: '', value: false }); 
     }
   };
 
@@ -177,7 +183,7 @@ const Teams = ({ id, isCreator }) => {
 
   const closeModal = () => {
     Animated.timing(slideAnim, {
-      toValue: height,
+      toValue: modalHeight,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
@@ -218,9 +224,9 @@ const Teams = ({ id, isCreator }) => {
           disabled={loading.key === `Delete-${item.id}` && loading.value}
         >
           {loading.key === `Delete-${item.id}` && loading.value ? (
-            <ActivityIndicator size="small" color={colors.danger} />
+            <ActivityIndicator size="small" color={AppColors.danger} />
           ) : (
-            <Icon name="delete" size={24} color={colors.danger} />
+            <Icon name="remove-circle-outline" size={26} color={AppColors.danger} />
           )}
         </Pressable>
       )}
@@ -249,9 +255,9 @@ const Teams = ({ id, isCreator }) => {
           </Text>
         </View>
         {isAddingTeam && teamId === item.id ? (
-          <ActivityIndicator size="small" color={colors.accent} style={styles.addingIndicator} />
+          <ActivityIndicator size="small" color={AppColors.primary} style={styles.addingIndicator} />
         ) : (
-          <Icon name="add-circle-outline" size={24} color={colors.accent} />
+          <Icon name="add-circle-outline" size={24} color={AppColors.primary} />
         )}
       </View>
     </Pressable>
@@ -262,7 +268,7 @@ const Teams = ({ id, isCreator }) => {
       <MaterialCommunityIcons
         name="account-group"
         size={60}
-        color={colors.accentLight}
+        color={AppColors.accentLight}
         style={styles.emptyIcon}
       />
       <Text style={styles.emptyTitle}>No Teams Yet</Text>
@@ -287,14 +293,14 @@ const Teams = ({ id, isCreator }) => {
       <View style={styles.container}>
         {loading.value && loading.key === 'All' ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
+            <ActivityIndicator size="large" color={AppColors.primary} />
           </View>
-        ) : error ? (
+        ) : error && teams.length === 0 ? (
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons
               name="alert-circle-outline"
               size={50}
-              color={colors.danger}
+              color={AppColors.danger}
             />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity
@@ -305,85 +311,93 @@ const Teams = ({ id, isCreator }) => {
             </TouchableOpacity>
           </View>
         ) : (
-          <>
-            {teams.length > 0 ? (
-              <FlatList
-                data={teams}
-                renderItem={renderTeamItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    colors={[colors.accent]}
-                    tintColor={colors.accent}
-                  />
-                }
-                ListFooterComponent={
-                  isCreator && (
-                    <View style={styles.addButtonContainer}>
-                      <TouchableOpacity
-                        style={styles.floatingAddButton}
-                        onPress={openModal}
-                        activeOpacity={0.85}
-                        disabled={loading.value && loading.key === 'All'}
-                      >
-                        <LinearGradient
-                          colors={['#007AFF', '#0047AB']}
-                          style={styles.gradientButton}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                        >
-                          <Icon name="add" size={28} color="#FFF" />
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    </View>
-                  )
-                }
+          <FlatList
+            // 💥 FIX: Disabling internal scrolling to resolve nesting error
+            scrollEnabled={false} 
+            data={teams}
+            renderItem={renderTeamItem}
+            keyExtractor={(item) => item.id}
+            // Removing paddingBottom here since the parent ScrollView handles overall padding
+            contentContainerStyle={styles.listContentNoScroll} 
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[AppColors.primary]}
+                tintColor={AppColors.primary}
               />
-            ) : (
-              renderEmptyState()
-            )}
-          </>
+            }
+            ListEmptyComponent={renderEmptyState}
+          />
+        )}
+        
+        {/* Floating Add Button */}
+        {isCreator && (teams.length > 0 || !loading.value) && (
+            <View style={styles.fixedButtonContainer}>
+                <TouchableOpacity
+                    style={styles.floatingAddButton}
+                    onPress={openModal}
+                    activeOpacity={0.85}
+                    disabled={loading.value && loading.key === 'All'}
+                >
+                    <LinearGradient
+                        colors={[AppColors.primary, AppColors.primaryDark]}
+                        style={styles.gradientButton}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                    >
+                        <Icon name="add" size={28} color="#FFF" />
+                    </LinearGradient>
+                </TouchableOpacity>
+            </View>
         )}
 
+        {/* Modal for Adding Teams */}
         <Modal visible={modalVisible} transparent animationType="none" onRequestClose={closeModal}>
           <TouchableWithoutFeedback onPress={closeModal}>
             <View style={styles.modalOverlay} />
           </TouchableWithoutFeedback>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ position: 'absolute', top: 0, width: '100%' }}
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           >
-            <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
+            {/* Modal Content - Animate from top */}
+            <Animated.View style={[
+              styles.modalContent, 
+              { transform: [{ translateY: slideAnim }] }
+            ]}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add Teams</Text>
-                <TouchableOpacity onPress={closeModal}>
-                  <Icon name="close" size={24} color={colors.textSecondary} />
+                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                  <Icon name="close" size={24} color={AppColors.textSecondary} />
                 </TouchableOpacity>
               </View>
               <View style={styles.searchContainer}>
                 <AntDesign
                   name="search1"
                   size={20}
-                  color={colors.placeholder}
+                  color={AppColors.primary}
                   style={styles.searchIcon}
                 />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search team by name..."
-                  placeholderTextColor={colors.placeholder}
+                  placeholderTextColor={AppColors.placeholder}
                   value={enteredTeamName}
                   onChangeText={handleInputChange}
                   autoFocus={true}
                   returnKeyType="search"
                 />
+                {loading.value && loading.key === 'Search' && (
+                  <ActivityIndicator size="small" color={AppColors.primary} />
+                )}
               </View>
               <View style={styles.dropdownContainer}>
                 {loading.value && loading.key === 'Search' ? (
                   <View style={styles.modalLoader}>
-                    <ActivityIndicator size="large" color={colors.accent} />
+                    <ActivityIndicator size="large" color={AppColors.primary} />
+                    <Text style={{ color: AppColors.textSecondary, marginTop: 10 }}>Searching...</Text>
                   </View>
                 ) : dropdownOptions.length > 0 ? (
                   <FlatList
@@ -395,12 +409,16 @@ const Teams = ({ id, isCreator }) => {
                   />
                 ) : enteredTeamName.length > 2 ? (
                   <View style={styles.noResults}>
-                    <Text style={styles.noResultsText}>No teams found for "{enteredTeamName}"</Text>
+                    <Text style={styles.noResultsTitle}>No Teams Found 😥</Text>
+                    <Text style={styles.noResultsText}>
+                      Try refining your search query.
+                    </Text>
                   </View>
                 ) : (
                   <View style={styles.noResults}>
+                    <Icon name="search" size={40} color={AppColors.placeholder} />
                     <Text style={styles.noResultsText}>
-                      Search for teams to add.
+                      Start typing a team name to search and add.
                     </Text>
                   </View>
                 )}
@@ -417,13 +435,12 @@ const styles = StyleSheet.create({
   safeArea: {
     marginTop: 10,
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: AppColors.background,
     borderRadius: 10,
     paddingVertical: 10,
   },
   container: {
     flex: 1,
-    position: 'relative',
     borderRadius: 10,
   },
   loadingContainer: {
@@ -438,19 +455,19 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   errorText: {
-    color: colors.textSecondary,
+    color: AppColors.textSecondary,
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: colors.accent,
+    backgroundColor: AppColors.accent,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: colors.surface,
+    color: AppColors.surface,
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -459,64 +476,77 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: AppColors.surface,
     borderRadius: 16,
     margin: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: AppColors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: height * 0.4
   },
   emptyIcon: {
     marginBottom: 20,
-    opacity: 0.2,
+    opacity: 0.4,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.text,
+    color: AppColors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptyText: {
-    color: colors.textSecondary,
+    color: AppColors.textSecondary,
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
   },
   emptyStateAddButton: {
-    backgroundColor: colors.accent,
+    backgroundColor: AppColors.primary,
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 10,
+    shadowColor: AppColors.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   emptyStateAddButtonText: {
-    color: colors.surface,
+    color: AppColors.surface,
     fontWeight: 'bold',
     fontSize: 16,
   },
+  // FIX: Content container style when scrolling is disabled. Needs enough padding
+  listContentNoScroll: {
+    paddingVertical: 12,
+    paddingBottom: 80, // Ensure enough bottom padding for the floating button
+    paddingHorizontal: 16,
+    flexGrow: 1, // Crucial for the parent ScrollView to capture the full height
+  },
   listContent: {
     paddingVertical: 12,
-    paddingBottom: 80,
+    paddingBottom: 80, 
     paddingHorizontal: 16,
   },
   teamCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: AppColors.surface,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderLeftWidth: 4,
+    borderLeftColor: AppColors.accent,
+    shadowColor: AppColors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   teamInfo: {
     flexDirection: 'row',
@@ -528,65 +558,72 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   teamImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.border,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: AppColors.border,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   teamName: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
+    color: AppColors.text,
   },
   teamCaptain: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 4,
+    color: AppColors.textSecondary,
+    marginTop: 2,
   },
   deleteButton: {
-    padding: 10,
+    padding: 8,
     marginLeft: 10,
   },
-  addButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 10,
+
+  // --- Modal & Search Styles ---
+  fixedButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 10,
   },
   floatingAddButton: {
-    // position: 'absolute',
-    // bottom: 30,
-    // right: 20,
-    // width: 60,
+    width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowColor: AppColors.primaryDark,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
     shadowRadius: 8,
-    elevation: 8,
-    zIndex: 10,
+    elevation: 10,
   },
   gradientButton: {
     width: '100%',
     height: '100%',
-    minHeight: 60,
-    minWidth: 60,
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    position: 'absolute', 
+    width: '100%',
+    height: '100%',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: AppColors.surface,
+    width: '100%',
     padding: 24,
-    shadowColor: '#000',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: height * 0.5,
+    maxHeight: height * 0.8,
+    shadowColor: AppColors.text,
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -599,29 +636,34 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 22,
+    fontWeight: '700',
+    color: AppColors.text,
+  },
+  closeButton: {
+    padding: 4,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.background,
+    backgroundColor: AppColors.surface, 
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 14 : 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: AppColors.primary, 
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: colors.text,
-    marginLeft: 8,
+    color: AppColors.text,
+    marginLeft: 12,
+    padding: 0, 
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 0,
+    color: AppColors.primary,
   },
   modalLoader: {
     minHeight: 120,
@@ -630,55 +672,63 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     maxHeight: height * 0.4,
+    paddingBottom: 10,
   },
   dropdownContent: {
     paddingVertical: 8,
   },
   teamOptionItem: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   teamOptionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    backgroundColor: colors.background,
-    borderRadius: 12,
+    padding: 12,
+    backgroundColor: AppColors.background,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: AppColors.border,
   },
   teamOptionImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.border,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: AppColors.border,
   },
   teamOptionText: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: 15,
   },
   teamOptionName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
+    color: AppColors.text,
   },
   teamOptionCaptain: {
     fontSize: 13,
-    color: colors.textSecondary,
+    color: AppColors.textSecondary,
     marginTop: 2,
   },
   addingIndicator: {
-    marginLeft: 8,
+    marginLeft: 10,
   },
   noResults: {
-    paddingVertical: 40,
+    paddingVertical: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: AppColors.text,
+    marginBottom: 8,
+  },
   noResultsText: {
-    color: colors.textSecondary,
-    fontSize: 16,
+    color: AppColors.textSecondary,
+    fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
+    paddingHorizontal: 20,
   },
 });
 

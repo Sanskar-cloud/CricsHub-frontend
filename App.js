@@ -1,55 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { NavigationContainer, useNavigationState } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useRef, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Screens
+import AnimatedSplash from './assets/animations/SplashScreen.js';
 import Login from './components/Authentication/Login';
 import OTP from './components/Authentication/Otp';
 import RegisterForm from './components/Authentication/RegistrationForm';
-// import Registration from './components/Authentication/Registration';
-import Tournaments from './components/Tournaments/Tournaments';
+import ContestDetails from './components/Fantasy/ContestDetails';
+import Contests from './components/Fantasy/Contests';
+import CreateContestTeam from './components/Fantasy/CreateContestTeam';
+import FantasyCricketScreen from './components/Fantasy/FantasyHome';
+import Footer from './components/Footer';
 import Home from './components/Home/Home';
-import Teams from './components/Teams/Teams';
+import Sidebar from './components/Home/Sidebar'; // Assuming Sidebar is next to Home
+import InternetConnectivityCheck from './components/InternetConnectivity';
+import ConnectLiveStream from './components/LiveStream/ConnectLiveStream';
+import StreamInfoModal from './components/LiveStream/StreamInfoModel';
+import StreamMatch from './components/LiveStream/StreamMatch';
+import AllMatches from './components/Matches/AllMatches/AllMatches';
+import InstantMatch from './components/Matches/MatchOps/InstantMatch';
+import MatchOperatives from './components/Matches/MatchOps/MatchOperatives';
+import MatchStartTransition from './components/Matches/MatchOps/MatchStartTransition';
+import ScheduleMatch from './components/Matches/MatchOps/ScheduleMatch';
+import Scoring from './components/Matches/MatchOps/Scoring';
+import SelectPlayingII from './components/Matches/MatchOps/SelectPlayingII';
+import SelectRoles from './components/Matches/MatchOps/SelectRoles';
+import SelectRoles2ndInnings from './components/Matches/MatchOps/SelectRoles2ndInnings';
+import Toss from './components/Matches/MatchOps/Toss';
+import TossScreen from './components/Matches/MatchOps/TossScreen';
+import CommentaryScorecard from './components/Matches/MatchScorecard/CommentaryScorecard';
+import ScoreCard from './components/Matches/MatchScorecard/ScoreCard.tsx';
+import Performance from './components/Settings/Performance';
+import PrivacyPolicy from './components/Settings/PrivacyPolicy';
 import Profile from './components/Settings/Profile';
 import Support from './components/Settings/Support';
 import TossFlip from './components/Settings/TossFlip';
-import PrivacyPolicy from './components/Settings/PrivacyPolicy';
-import Performance from './components/Settings/Performance';
-import Footer from './components/Footer';
-import CreateTeam from './components/Teams/CreateTeam';
-import CreateTournaments from './components/Tournaments/CreateTournaments';
-import ManageTournaments from './components/Tournaments/Tournaments Overview/ManageTournaments';
-import TeamDetailsScreen from './components/Teams/TeamDetailsScreen';
-import InstantMatch from './components/Matches/MatchOps/InstantMatch';
-import SelectPlayingII from './components/Matches/MatchOps/SelectPlayingII';
-import TossScreen from './components/Matches/MatchOps/TossScreen';
-import Toss from './components/Matches/MatchOps/Toss';
-import Scoring from './components/Matches/MatchOps/Scoring';
-import SelectRoles from './components/Matches/MatchOps/SelectRoles';
 import AddPlayersToTeam from './components/Teams/AddPlayersToTeam';
-import SelectRoles2ndInnings from './components/Matches/MatchOps/SelectRoles2ndInnings';
-import AllMatches from './components/Matches/AllMatches/AllMatches';
-import ScheduleMatch from './components/Matches/MatchOps/ScheduleMatch';
-import MatchOperatives from './components/Matches/MatchOps/MatchOperatives';
-import CommentaryScorecard from './components/Matches/MatchScorecard/CommentaryScorecard';
-import FantasyCricketScreen from './components/Fantasy/FantasyHome';
-import Contests from './components/Fantasy/Contests';
-import ContestDetails from './components/Fantasy/ContestDetails';
-import CreateContestTeam from './components/Fantasy/CreateContestTeam';
-import MatchStartTransition from './components/Matches/MatchOps/MatchStartTransition';
+import CreateTeam from './components/Teams/CreateTeam';
+import TeamDetailsScreen from './components/Teams/TeamDetailsScreen';
+import Teams from './components/Teams/Teams';
+import CreateTournaments from './components/Tournaments/CreateTournaments';
+import TournamentMatchOperatives from './components/Tournaments/TournamentMatchOperatives';
+import Tournaments from './components/Tournaments/Tournaments';
+import ManageTournaments from './components/Tournaments/Tournaments Overview/ManageTournaments';
 import Info from './components/Tournaments/Tournaments Overview/TournamentInfo';
 import { Matches } from './components/Tournaments/Tournaments Overview/TournamentMatches';
-import Teams1 from './components/Tournaments/Tournaments Overview/TournamentTeams';
 import PointsTable from './components/Tournaments/Tournaments Overview/TournamentPointtable';
-import ScoreCard from './components/Matches/MatchScorecard/ScoreCard.tsx';
-import InternetConnectivityCheck from './components/InternetConnectivity';
-import ConnectLiveStream from './components/LiveStream/ConnectLiveStream';
-import StreamMatch from './components/LiveStream/StreamMatch';
-import AnimatedSplash from './assets/animations/SplashScreen.js';
-import { AppColors } from './assets/constants/colors';
-import StreamInfoModal from './components/LiveStream/StreamInfoModel';
-import TournamentMatchOperatives from './components/Tournaments/TournamentMatchOperatives';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Teams1 from './components/Tournaments/Tournaments Overview/TournamentTeams';
 
+const { width } = Dimensions.get("window");
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -58,8 +60,6 @@ const App = () => {
   if (showSplash) {
     return <AnimatedSplash onFinish={() => setShowSplash(false)} />;
   }
-
-  // const insets = useSafeAreaInsets();
 
   return (
     <NavigationContainer>
@@ -70,7 +70,6 @@ const App = () => {
         >
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="RegisterForm" component={RegisterForm} />
-          {/* <Stack.Screen name="Registration" component={Registration} /> */}
           <Stack.Screen name="OTP" component={OTP} />
           <Stack.Screen name="Main" component={MainScreens} />
         </Stack.Navigator>
@@ -79,14 +78,56 @@ const App = () => {
   );
 };
 
-const MainScreens = () => {
-  const state = useNavigationState((state) => state);
-  const currentRoute =
-    state.routes[state.index]?.state?.routes[
-      state.routes[state.index]?.state?.index || 0
-    ]?.name || state.routes[state.index]?.name;
+const MainScreens = ({ navigation: rootNavigation }) => {
+  // --- SIDEBAR STATE AND LOGIC ---
+  const sidebarAnim = useRef(new Animated.Value(-width)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [userName, setUserName] = useState(""); // State for user name
 
-  const hideFooterScreens = [
+  const toggleSidebar = () => {
+    if (isSidebarVisible) {
+      closeSidebar();
+    } else {
+      setIsSidebarVisible(true);
+      Animated.parallel([
+        Animated.timing(sidebarAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
+
+  const closeSidebar = () => {
+    Animated.parallel([
+      Animated.timing(sidebarAnim, {
+        toValue: -width,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(overlayAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setIsSidebarVisible(false));
+  };
+  // --------------------------------
+
+  const navigationState = useNavigationState((state) => state);
+  const currentRoute =
+    navigationState.routes[navigationState.index]?.state?.routes[
+      navigationState.routes[navigationState.index]?.state?.index || 0
+    ]?.name || navigationState.routes[navigationState.index]?.name;
+
+  const hideFooterOrSidebarScreens = [
     "SelectPlayingII",
     "TossScreen",
     "Profile",
@@ -118,13 +159,27 @@ const MainScreens = () => {
     "Otp",
   ];
 
-  const shouldShowFooter = !hideFooterScreens.includes(currentRoute);
+  const shouldShowFooter = !hideFooterOrSidebarScreens.includes(currentRoute);
   const insets = useSafeAreaInsets();
 
   return (
     <View style={{ flex: 1, marginBottom: insets.bottom }}>
+      {/* 1. Stack Navigator Renders Screen Content */}
       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Home">
-        <Stack.Screen name="Home" component={Home} />
+        
+        {/* Pass sidebar controls and user state only to the Home screen */}
+        <Stack.Screen name="Home">
+            {(props) => (
+                <Home 
+                    {...props} 
+                    toggleSidebar={toggleSidebar} 
+                    userName={userName} 
+                    setUserName={setUserName} 
+                />
+            )}
+        </Stack.Screen>
+        
+        {/* All other screen registrations remain */}
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="MyMatches" component={AllMatches} />
         <Stack.Screen name="Tournaments" component={Tournaments} />
@@ -165,12 +220,41 @@ const MainScreens = () => {
         <Stack.Screen name="StreamInfoModel" component={StreamInfoModal} />
       </Stack.Navigator>
 
+      {/* 2. Sidebar Overlay (Rendered above Stack) */}
+      {isSidebarVisible && (
+        <TouchableWithoutFeedback onPress={closeSidebar}>
+          <Animated.View
+            style={[styles.overlay, { opacity: overlayAnim }]}
+          />
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* 3. Sidebar Component (Rendered above Stack/Overlay) */}
+      <Sidebar
+          sidebarAnim={sidebarAnim}
+          userName={userName}
+          navigation={rootNavigation} // Pass the root navigator for sidebar navigation
+          closeSidebar={closeSidebar}
+          isSidebarVisible={isSidebarVisible}
+      />
+      
+      {/* 4. Footer (Conditional rendering based on currentRoute) */}
       {shouldShowFooter && <Footer style={styles.footer} />}
+      
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 90,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
   footer: {
     width: '100%',
     zIndex: 1,
