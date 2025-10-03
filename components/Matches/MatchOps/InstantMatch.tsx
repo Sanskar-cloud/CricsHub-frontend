@@ -52,6 +52,7 @@ const InstantMatch = () => {
   const team1ShakeAnim = useRef(new Animated.Value(0)).current;
   const team2ShakeAnim = useRef(new Animated.Value(0)).current;
 
+  // slideAnim is for the modal, initial value is the distance to slide up from the bottom
   const slideAnim = useRef(new Animated.Value(500)).current;
   const navigation = useAppNavigation();
 
@@ -226,7 +227,13 @@ const InstantMatch = () => {
       <StatusBar barStyle="dark-content" backgroundColor={AppColors.white} translucent={false} />
 
       <SafeAreaView style={styles.container}>
-        <View style={styles.instantMatchContainer}>
+        {/* PRIMARY KEYBOARD AVOIDING VIEW FOR MAIN SCREEN INPUTS */}
+        <KeyboardAvoidingView 
+          style={styles.instantMatchContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          // Adjust this offset if needed to clear header/status bar on Android
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
+        >
           <View style={styles.contentWrapper}>
             <Text style={styles.title}>Set Up Your Match</Text>
 
@@ -261,7 +268,7 @@ const InstantMatch = () => {
                 {team2Error ? <Text style={styles.errorText}>{team2Error}</Text> : null}
                 <Animated.View style={[{ transform: [{ translateX: team2ShakeAnim }] }, team2Error ? styles.errorBorderStrong : null, styles.teamCardOuter]}>
                   <TouchableOpacity
-                    style={styles.teamCircleButtonTouchable} // Changed to new style name
+                    style={styles.teamCircleButtonTouchable}
                     onPress={() => {
                       setSelectedTeam('team2');
                       setTeamModalVisible(true);
@@ -334,13 +341,17 @@ const InstantMatch = () => {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
+
+        {/* TEAM SELECTION MODAL */}
         <Modal visible={teamModalVisible} transparent animationType="fade">
+          {/* Pressable handles closing the modal when tapping outside */}
           <Pressable style={styles.modalOverlay} onPress={() => setTeamModalVisible(false)}>
+            {/* KAV for the modal itself to move it above the keyboard */}
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.teamModalContentContainer}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -200}
+              // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -200} // Removed unnecessary offset here
             >
               <Animated.View style={[styles.teamModalContent, { transform: [{ translateY: slideAnim }] }]}>
                 <Text style={styles.modalTitle}>Select Team</Text>
@@ -412,7 +423,7 @@ const styles = StyleSheet.create({
   },
   instantMatchContainer: {
     flex: 1,
-    // paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    // paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, // KAV handles this now
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -420,6 +431,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     paddingHorizontal: 20,
+    // Ensure content can flex up/down
+    flexGrow: 1, 
+    justifyContent: 'center',
   },
   title: {
     textAlign: 'center',
@@ -561,21 +575,23 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+  // --- MODAL STYLES (MODIFIED) ---
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-end', // Aligns modal to the bottom
     backgroundColor: AppColors.overlay,
   },
   teamModalContentContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-end', // Aligns Animated.View to the bottom
   },
   teamModalContent: {
     backgroundColor: AppColors.white,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    // MODIFIED: Use top radii for bottom-aligned modal
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25, 
+    // REMOVED: maxHeight to allow KAV to size it correctly
     padding: 25,
-    maxHeight: '80%',
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.1,

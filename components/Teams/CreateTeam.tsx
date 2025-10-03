@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
+  KeyboardAvoidingView, // <-- Added KeyboardAvoidingView
   Platform,
   StatusBar as RNStatusBar,
   SafeAreaView,
@@ -26,6 +27,9 @@ const AppColors = {
   error: "#E74C3C",
   darkText: "#000000",
   lightBackground: "#F8F9FA",
+  // Primary color used in the gradient
+  primaryGradientStart: '#4A90E2',
+  primaryGradientEnd: '#6BB9F0',
 };
 
 const CreateTeam = () => {
@@ -34,21 +38,9 @@ const CreateTeam = () => {
   const navigation = useNavigation();
 
   const pickImage = async () => {
-
-
-    //  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    //   if (status !== 'granted') {
-    //     Alert.alert(
-    //       "Permission Required",
-    //       "Please allow photo access to select a team logo."
-    //     );
-    //     return;
-    //   }
     const hasPermission = await ensureMediaPermission();
     if (!hasPermission) return;
 
-    // 3. Permission Granted: Open gallery
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -74,12 +66,12 @@ const CreateTeam = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ✅ Fixes Android SafeArea with padding */}
+      
       {Platform.OS === "android" && (
         <RNStatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       )}
 
-      {/* Header - Matching TeamPage style */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
@@ -92,10 +84,16 @@ const CreateTeam = () => {
         <View style={styles.headerButton} />
       </View>
 
-      <View style={styles.container}>
-        <View style={styles.contentContainer}>
+      {/* 💥 FIX: KeyboardAvoidingView wraps the content */}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Adjust the offset if the keyboard still overlaps on Android
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
+      >
+        <View style={styles.contentWrapper}>
           <LinearGradient
-            colors={['#4A90E2', '#6BB9F0']}
+            colors={[AppColors.primaryGradientStart, AppColors.primaryGradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.gradientCard}
@@ -106,7 +104,7 @@ const CreateTeam = () => {
                   {logoUri ? (
                     <Image source={{ uri: logoUri }} style={styles.logo} />
                   ) : (
-                    <MaterialIcons name="add-a-photo" size={40} color="#4A90E2" />
+                    <MaterialIcons name="add-a-photo" size={40} color={AppColors.primaryGradientStart} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -118,6 +116,8 @@ const CreateTeam = () => {
               placeholderTextColor="#999"
               value={teamName}
               onChangeText={setTeamName}
+              maxLength={20}
+              autoCapitalize="words"
             />
 
             <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
@@ -125,7 +125,7 @@ const CreateTeam = () => {
             </TouchableOpacity>
           </LinearGradient>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -136,11 +136,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
   },
+  // Container now manages keyboard avoidance, using flex: 1
   container: {
     flex: 1,
     backgroundColor: AppColors.lightBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     flexDirection: "row",
@@ -161,15 +160,19 @@ const styles = StyleSheet.create({
     padding: 6,
     width: 40,
   },
-  contentContainer: {
+  // contentWrapper centers the content vertically
+  contentWrapper: {
+    flex: 1,
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
   },
   gradientCard: {
-    width: '90%',
+    width: '100%',
+    maxWidth: 400, // Optional: Limit width on larger screens/tablets
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: AppColors.primaryGradientStart,
     borderRadius: 20,
     padding: 25,
     shadowColor: '#000',
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: AppColors.primaryGradientStart,
   },
   logo: {
     width: 110,
@@ -203,20 +206,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 12,
     color: '#333',
-    borderRadius: 8,
-    marginBottom: 20,
-    backgroundColor: '#f9f9f9',
+    borderRadius: 10, // Slightly more rounded corners
+    marginBottom: 25, // Increased spacing for better look
+    backgroundColor: AppColors.white,
+    fontSize: 16,
+    fontWeight: '500',
   },
   continueButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: AppColors.primaryGradientStart,
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: 12, // Increased rounded corners
     alignItems: 'center',
+    shadowColor: AppColors.primaryGradientStart,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   continueButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: AppColors.white,
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
 

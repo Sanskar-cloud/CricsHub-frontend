@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Dimensions,
   Easing,
   FlatList,
   Image,
@@ -25,6 +26,25 @@ import {
 import * as Animatable from 'react-native-animatable';
 import apiService from '../APIservices';
 
+const { height } = Dimensions.get('window'); 
+
+// 🚨 UX CONSTANTS
+const AppColors = {
+  primary: '#4A90E2', // Blue
+  secondary: '#357ABD', // Darker Blue
+  success: '#4CAF50',
+  danger: '#F44336', // Red
+  warning: '#FFC107', // Yellow/Gold
+  lightBackground: '#F9F9F9',
+  cardBackground: '#FFFFFF',
+  textDark: '#333333',
+  textLight: '#777777',
+  placeholderGray: '#CCC', // Visible gray for empty states
+};
+
+// Placeholder image for player profile - Using require() for build compatibility
+const DefaultLogo = require("../../assets/defaultLogo.png");
+
 const AddPlayersToTeam = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPlayers, setFilteredPlayers] = useState([]);
@@ -42,7 +62,9 @@ const AddPlayersToTeam = () => {
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
+  const footerTranslateY = useState(new Animated.Value(0))[0]; 
 
+  // --- Animation & Keyboard Listeners ---
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -58,8 +80,26 @@ const AddPlayersToTeam = () => {
       }),
     ]).start();
 
-    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
-    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardOpen(false));
+    // Keyboard Handlers for sticky button
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardOpen(true);
+      // Move the footer up by keyboard height
+      Animated.timing(footerTranslateY, {
+        toValue: -e.endCoordinates.height + (Platform.OS === 'ios' ? 0 : 20), 
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardOpen(false);
+      // Move the footer back to its original position (0)
+      Animated.timing(footerTranslateY, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
 
     return () => {
       show.remove();
@@ -67,7 +107,7 @@ const AddPlayersToTeam = () => {
     };
   }, []);
 
-  // 🔎 Search debounce
+  // --- Search Debounce Logic ---
   useEffect(() => {
     const debounceSearch = setTimeout(() => {
       if (searchQuery.trim() !== '') {
@@ -75,33 +115,47 @@ const AddPlayersToTeam = () => {
       } else {
         setFilteredPlayers([]);
       }
-    }, 500);
+    }, 400); 
     return () => clearTimeout(debounceSearch);
   }, [searchQuery]);
 
+  // --- API/Storage Helpers ---
   const getToken = async () => await AsyncStorage.getItem('jwtToken');
   const getUserUUID = async () => await AsyncStorage.getItem('userUUID');
 
   const fetchPlayers = async (query) => {
     try {
       setLoading(true);
+      setErrorMessage('');
       const [nameRes, phoneRes] = await Promise.all([
         apiService({ endpoint: `teams/players/search/name`, method: 'GET', params: { query } }),
         apiService({ endpoint: `teams/players/search/phone`, method: 'GET', params: { query } }),
       ]);
       const nameData = nameRes.success ? nameRes.data.data || [] : [];
       const phoneData = phoneRes.success ? phoneRes.data.data || [] : [];
-      setFilteredPlayers([...nameData, ...phoneData]);
-    } catch {
-      setFilteredPlayers([]);
+      
+      // Combine and filter duplicates by ID
+      const allPlayersMap = new Map();
+      [...nameData, ...phoneData].forEach(player => {
+          if (!allPlayersMap.has(player.id)) {
+              allPlayersMap.set(player.id, player);
+          }
+      });
+      
+      setFilteredPlayers(Array.from(allPlayersMap.values()));
+
+    } catch (e) {
+        setErrorMessage('Failed to fetch players. Network error.');
+        setFilteredPlayers([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Team Management Functions ---
   const addPlayerToTeam = (player) => {
     if (playerId.includes(player.id)) {
-      Alert.alert("Player Already Added", `${player.name} is already in the team.`);
+      Alert.alert("Player Already Added", `${player.name} is already in the team.`, [{ text: "OK", style: 'cancel' }]);
       return;
     }
     setPlayerId((prev) => [...prev, player.id]);
@@ -119,20 +173,26 @@ const AddPlayersToTeam = () => {
 
   const makeCaptain = (id) => {
     setCaptainId(id);
-    Alert.alert("Captain Assigned", "This player is now the team captain.");
+    setErrorMessage('');
+    Alert.alert("Captain Assigned", `${teamPlayers.find(p => p.id === id)?.name || 'Player'} is now the team captain.`, [{ text: "OK", style: 'cancel' }]);
   };
 
   const createTeam = async () => {
     if (teamPlayers.length === 0) {
-      Alert.alert('Error', 'Please add at least one player.');
+      setErrorMessage('Please add at least one player to create the team.');
       return;
     }
     if (!captainId) {
-      setErrorMessage('Please assign a captain.');
+      setErrorMessage('Please assign a captain before creating the team.');
       return;
     }
 
     setCreatingTeam(true);
+    setErrorMessage('');
+    
+    // --- Error Message Variable ---
+    let backendErrorMessage = 'An unexpected error occurred during team creation.';
+
     try {
       const token = await getToken();
       const userId = await getUserUUID();
@@ -141,34 +201,51 @@ const AddPlayersToTeam = () => {
       formData.append('name', teamName);
       formData.append('captainId', captainId);
       formData.append('playerIds', playerId.join(','));
+      
+      // Handle Logo upload
       if (logoUri) {
         const fileName = logoUri.split('/').pop();
         const fileType = fileName.split('.').pop();
         formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
       }
 
-      const response = await apiService({ endpoint: `teams/${userId}`, method: 'POST', body: formData, isMultipart: true });
+      const response = await apiService({ 
+          endpoint: `teams/${userId}`, 
+          method: 'POST', 
+          body: formData, 
+          isMultipart: true 
+      });
 
       if (response.success) {
         setTeamPlayers([]);
         setPlayerId([]);
         setCaptainId(null);
-        Alert.alert('Success', 'Team created successfully!');
-        navigation.navigate('Teams');
+        Alert.alert('Success', 'Team created successfully!', [{ text: 'OK', onPress: () => navigation.navigate('Teams') }]);
       } else {
-        Alert.alert('Error', response.error?.message || 'Failed to create team.');
+        // Use the specific backend error message from the response
+        backendErrorMessage = response.error?.message || 'Failed to create team. No specific message provided.';
+        
+        // Show the alert and set the sticky error message
+        Alert.alert('Error', backendErrorMessage);
+        setErrorMessage(backendErrorMessage);
       }
+    } catch (e) {
+        // If a network/catch error occurs, use the generic message
+        Alert.alert('Error', backendErrorMessage);
+        setErrorMessage(backendErrorMessage);
+
     } finally {
       setCreatingTeam(false);
     }
   };
 
-  // 🔹 UI
+  // --- UI Render Functions ---
   const renderPlayerItem = ({ item }) => (
     <Animatable.View animation="fadeIn" duration={300} style={styles.dropdownItem}>
       <View style={styles.dropdownLeft}>
         <Image
-          source={item.profilePic ? { uri: item.profilePic } : require("../../assets/defaultLogo.png")}
+          // Fallback to local DefaultLogo
+          source={item.profilePic ? { uri: item.profilePic } : DefaultLogo}
           style={styles.dropdownPlayerProfilePic}
         />
         <View style={styles.dropdownPlayerInfo}>
@@ -176,8 +253,8 @@ const AddPlayersToTeam = () => {
           <Text style={styles.dropdownPlayerRole}>{item.role || 'All-rounder'}</Text>
         </View>
       </View>
-      <TouchableOpacity onPress={() => addPlayerToTeam(item)}>
-        <Ionicons name="add-circle" size={28} color="#4A90E2" />
+      <TouchableOpacity onPress={() => addPlayerToTeam(item)} style={styles.addButton}>
+        <Ionicons name="add-circle" size={28} color={AppColors.primary} />
       </TouchableOpacity>
     </Animatable.View>
   );
@@ -187,12 +264,13 @@ const AddPlayersToTeam = () => {
       <View style={styles.playerMainInfo}>
         <View style={[styles.playerProfileWrapper, captainId === item.id && styles.captainHighlight]}>
           <Image
-            source={item.profilePic ? { uri: item.profilePic } : require("../../assets/defaultLogo.png")}
+            // Fallback to local DefaultLogo
+            source={item.profilePic ? { uri: item.profilePic } : DefaultLogo}
             style={styles.playerProfilePic}
           />
           {captainId === item.id && (
             <View style={styles.captainBadge}>
-              <FontAwesome name="star" size={14} color="#FFD700" />
+              <FontAwesome name="star" size={12} color={AppColors.warning} />
             </View>
           )}
         </View>
@@ -202,30 +280,42 @@ const AddPlayersToTeam = () => {
         </View>
       </View>
       <View style={styles.cardActions}>
-        <TouchableOpacity style={[styles.captainButton, captainId === item.id && styles.activeCaptainButton]} onPress={() => makeCaptain(item.id)}>
-          <FontAwesome name="star" size={16} color={captainId === item.id ? "#FFD700" : "#4A90E2"} />
+        <TouchableOpacity 
+          style={[styles.captainButton, captainId === item.id && styles.activeCaptainButton]} 
+          onPress={() => makeCaptain(item.id)}
+          disabled={captainId === item.id}
+        >
+          <FontAwesome name="star" size={16} color={captainId === item.id ? AppColors.warning : AppColors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => removePlayerFromTeam(item.id)}>
-          <MaterialIcons name="delete" size={22} color="#F44336" />
+        <TouchableOpacity onPress={() => removePlayerFromTeam(item.id)} style={styles.deleteButton}>
+          <MaterialIcons name="delete" size={24} color={AppColors.danger} />
         </TouchableOpacity>
       </View>
     </Animatable.View>
   );
 
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+        <Ionicons name="people-outline" size={60} color={AppColors.placeholderGray} /> 
+        <Text style={styles.emptyStateText}>Start by searching and adding players above.</Text>
+        <Text style={styles.emptyStateSubText}>Your selected players will appear here.</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor={AppColors.cardBackground} />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -height * 0.5} 
       >
         <Animated.View style={[styles.contentContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#4A90E2" />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={AppColors.primary} />
             </TouchableOpacity>
             <Text style={styles.headerText}>Add Players</Text>
             <View style={styles.teamNameContainer}>
@@ -233,13 +323,14 @@ const AddPlayersToTeam = () => {
             </View>
           </View>
 
-          {/* Search */}
-          <View style={{ position: 'relative', marginTop: 10 }}>
+          {/* Search Area */}
+          <View style={{ position: 'relative', zIndex: 10, marginBottom: 15 }}>
             <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color="#4A90E2" />
+              <Ionicons name="search" size={20} color={AppColors.primary} />
               <TextInput
                 style={styles.input}
                 placeholder="Search by name or phone..."
+                placeholderTextColor={AppColors.textLight}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -250,12 +341,13 @@ const AddPlayersToTeam = () => {
               )}
             </View>
 
-            {/* Floating Search Results */}
-            {filteredPlayers.length > 0 && (
-              <View style={styles.dropdownContainer}>
+            {/* Search Results List (Non-Floating) */}
+            {filteredPlayers.length > 0 && !loading && (
+              <View style={styles.searchResultsList}>
                 <ScrollView
                   keyboardShouldPersistTaps="handled"
                   nestedScrollEnabled={true}
+                  style={{ maxHeight: 250 }} 
                 >
                   {filteredPlayers.map((player) => (
                     <View key={player.id}>{renderPlayerItem({ item: player })}</View>
@@ -263,43 +355,48 @@ const AddPlayersToTeam = () => {
                 </ScrollView>
               </View>
             )}
+            
+            {/* Search Loader */}
+            {loading && searchQuery.length > 0 && (
+                <View style={styles.searchLoading}>
+                    <ActivityIndicator size="small" color={AppColors.primary} />
+                </View>
+            )}
           </View>
 
-          {/* Loader */}
-          {loading && <ActivityIndicator size="large" color="#4A90E2" style={{ marginVertical: 10 }} />}
-
-          {/* Team Players */}
+          {/* Team Players List */}
           <View style={styles.teamPlayersContainer}>
             <Text style={styles.sectionTitle}>Team Players ({teamPlayers.length})</Text>
             <FlatList
               data={teamPlayers}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               renderItem={renderTeamPlayer}
               contentContainerStyle={teamPlayers.length === 0 ? styles.emptyListContainer : styles.listContainer}
+              ListEmptyComponent={renderEmptyState}
               showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
               style={styles.playersList}
             />
           </View>
-
-          {/* Footer */}
-          {!keyboardOpen && (
-            <View style={styles.footer}>
-              {errorMessage !== '' && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-              <TouchableOpacity onPress={createTeam} disabled={creatingTeam || teamPlayers.length === 0}>
-                <LinearGradient
-                  colors={teamPlayers.length === 0 ? ['#ccc', '#aaa'] : ['#4A90E2', '#357ABD']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.createButton}
-                >
-                  {creatingTeam ? <ActivityIndicator color="#fff" /> : <Text style={styles.createButtonText}>Create Team</Text>}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          )}
         </Animated.View>
       </KeyboardAvoidingView>
+
+      {/* Footer (Sticky & Keyboard-Aware) */}
+      <Animated.View 
+        style={[styles.footer, { transform: [{ translateY: footerTranslateY }] }]}
+      >
+        {errorMessage !== '' && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+        <TouchableOpacity onPress={createTeam} disabled={creatingTeam || teamPlayers.length === 0}>
+          <LinearGradient
+            colors={teamPlayers.length === 0 ? ['#ccc', '#aaa'] : [AppColors.primary, AppColors.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.createButton}
+          >
+            {creatingTeam ? <ActivityIndicator color="#fff" /> : <Text style={styles.createButtonText}>Create Team ({teamPlayers.length})</Text>}
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -307,136 +404,150 @@ const AddPlayersToTeam = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.cardBackground,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: AppColors.cardBackground
   },
   contentContainer: {
     flex: 1,
-    padding: 20
+    paddingHorizontal: 20,
+    paddingBottom: 80, 
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.lightBackground,
+    marginBottom: 10,
   },
   headerText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333'
+    fontSize: 24,
+    fontWeight: '800',
+    color: AppColors.textDark,
   },
   teamNameContainer: {
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: AppColors.primary,
     borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 4
+    paddingVertical: 4,
+    backgroundColor: '#eaf4ff'
   },
   teamName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2'
+    color: AppColors.primary,
   },
+  // Search
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f7f7f7',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 50,
+    backgroundColor: AppColors.lightBackground,
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    height: 55,
     borderWidth: 1,
-    borderColor: '#ddd'
+    borderColor: '#eee',
+    shadowColor: AppColors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
-    marginLeft: 8
+    color: AppColors.textDark,
+    marginLeft: 10,
   },
-  dropdownContainer: {
+  searchLoading: {
     position: 'absolute',
-    top: 55,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    right: 50,
+    top: 18,
+    zIndex: 11,
+  },
+  // Search Results List Style
+  searchResultsList: {
+    marginTop: 5,
+    backgroundColor: AppColors.cardBackground,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: '#eee',
+    overflow: 'hidden',
     zIndex: 10,
-    maxHeight: 200,
   },
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    borderBottomColor: AppColors.lightBackground, 
+    backgroundColor: AppColors.cardBackground,
   },
   dropdownLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1
+    flex: 1,
   },
   dropdownPlayerProfilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    marginRight: 15,
+    backgroundColor: AppColors.lightBackground,
   },
   dropdownPlayerName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333'
+    fontWeight: '700',
+    color: AppColors.textDark,
   },
   dropdownPlayerRole: {
-    fontSize: 14,
-    color: '#777'
+    fontSize: 13,
+    color: AppColors.textLight,
   },
+  addButton: {
+    padding: 5,
+  },
+  // Team List
   teamPlayersContainer: {
     flex: 1,
-    marginBottom: 80,
+    paddingTop: 5,
   },
   playersList: {
     flex: 1,
   },
   listContainer: {
-    paddingVertical: 10,
-  },
-  emptyListContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
+    paddingBottom: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10
+    fontSize: 20,
+    fontWeight: '800',
+    color: AppColors.textDark,
+    marginBottom: 10,
+    marginTop: 5,
+    borderLeftWidth: 4,
+    borderLeftColor: AppColors.primary,
+    paddingLeft: 10,
   },
   teamPlayerCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: AppColors.cardBackground,
     padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
+    borderRadius: 15,
     marginBottom: 10,
+    borderColor: '#ddd',
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
     elevation: 3
   },
   playerMainInfo: {
@@ -445,58 +556,90 @@ const styles = StyleSheet.create({
     flex: 1
   },
   playerProfileWrapper: {
-    position: 'relative'
+    position: 'relative',
+    borderRadius: 30,
   },
   captainHighlight: {
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    borderRadius: 25,
-    padding: 2
+    borderWidth: 3,
+    borderColor: AppColors.warning,
+    borderRadius: 30,
+    padding: 1,
   },
   captainBadge: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 2,
-    elevation: 2
+    bottom: 0,
+    right: 0,
+    backgroundColor: AppColors.cardBackground,
+    borderRadius: 8,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: AppColors.warning,
+    elevation: 4,
   },
   playerProfilePic: {
     width: 50,
     height: 50,
-    borderRadius: 25
+    borderRadius: 25,
+    backgroundColor: AppColors.lightBackground,
   },
   playerInfo: {
     flex: 1,
-    marginLeft: 10
+    marginLeft: 15
   },
   playerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333'
+    fontSize: 17,
+    fontWeight: '700',
+    color: AppColors.textDark
   },
   playerRole: {
     fontSize: 14,
-    color: '#555'
+    color: AppColors.textLight
   },
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10
+    gap: 15
   },
   captainButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: AppColors.primary,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: AppColors.cardBackground,
   },
   activeCaptainButton: {
-    backgroundColor: '#eaf4ff'
+    backgroundColor: AppColors.warning + '30', 
+    borderColor: AppColors.warning,
   },
+  deleteButton: {
+    padding: 5,
+  },
+  // Empty State
+  emptyListContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: AppColors.textLight,
+    marginTop: 10,
+    fontWeight: '600',
+  },
+  emptyStateSubText: {
+    fontSize: 14,
+    color: '#aaa',
+    marginTop: 5,
+  },
+  // Footer
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -505,21 +648,26 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    backgroundColor: AppColors.cardBackground,
+    zIndex: 20, 
   },
   createButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center'
+    padding: 18,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold'
   },
   errorMessage: {
-    color: '#F44336',
+    color: AppColors.danger,
     textAlign: 'center',
-    marginBottom: 10
+    marginBottom: 10,
+    fontWeight: '600',
   },
 });
 

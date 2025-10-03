@@ -1,29 +1,24 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  ImageBackground,
-  StatusBar,
   TouchableOpacity,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  TextInput,
-  Animated,
-  Pressable,
-  Image,
-  FlatList,
+  View
 } from 'react-native';
-import React, { useEffect, useState, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useAppNavigation } from '../../NavigationService';
-import { useFocusEffect } from '@react-navigation/native';
-import apiService from '../../APIservices';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import apiService from '../../APIservices';
+import { useAppNavigation } from '../../NavigationService';
 
 const { width } = Dimensions.get('window');
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
@@ -948,7 +943,7 @@ const styles = StyleSheet.create({
   tournamentName: {
     fontSize: 16,
     fontWeight: '700',
-    color: AppColors.secondaryBlue,
+    color: AppColors.white,
     textAlign: 'center',
   },
   matchCardContent: {

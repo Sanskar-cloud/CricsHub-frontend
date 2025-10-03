@@ -3,89 +3,33 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Dimensions,
   FlatList,
   Image,
   Modal,
   Platform,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { useAppNavigation } from '../NavigationService';
 // Assuming AppGradients and AppColors are available here
 import { AppColors, AppGradients } from "../../assets/constants/colors.js";
 import ensureMediaPermission from "../Permissions";
 
+
 const { width } = Dimensions.get("window");
 
-const Home = () => {
-  const navigation = useAppNavigation();
-  const sidebarAnim = useRef(new Animated.Value(-width)).current;
-  const overlayAnim = useRef(new Animated.Value(0)).current;
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  const [userName, setUserName] = useState("");
+// Home now receives toggleSidebar and setUserName as props from MainScreens
+const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
+  
   const [viewableItems, setViewableItems] = useState([]);
   const [showFantasyPopup, setShowFantasyPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const animatedValues = useRef(new Map()).current;
-
-  useEffect(() => {
-    const fetchUserName = async () => {
-      try {
-        const name = await AsyncStorage.getItem("userName");
-        if (name) {
-          setUserName(name);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user name:", error);
-      }
-    };
-
-    const askPermissions = async () => {
-      await ensureMediaPermission();
-    }
-
-    fetchUserName();
-    askPermissions();
-  }, []);
-
-  useEffect(() => {
-    const checkFirstTimeLogin = async () => {
-      try {
-        const hasCompletedProfilePrompt = await AsyncStorage.getItem("hasCompletedProfilePrompt");
-        if (hasCompletedProfilePrompt !== "true") {
-          setShowProfilePopup(true);
-        }
-      } catch (error) {
-        console.error("Failed to check first-time login status:", error);
-      }
-    };
-    checkFirstTimeLogin();
-  }, []);
-
-  useEffect(() => {
-    viewableItems.forEach((item) => {
-      if (item.isViewable) {
-        if (!animatedValues.has(item.index)) {
-          animatedValues.set(item.index, new Animated.Value(0));
-        }
-        Animated.spring(animatedValues.get(item.index), {
-          toValue: 1,
-          friction: 5,
-          tension: 40,
-          useNativeDriver: true,
-        }).start();
-      }
-    });
-  }, [viewableItems]);
-
+  
   const sections = [
     {
       title: "Start a Match",
@@ -116,9 +60,83 @@ const Home = () => {
       buttonText: "Stream Now",
       navigateTo: "StreamMatch",
       icon: "live-tv",
-      // isFullWidth: true,
     },
   ];
+
+  // --- Initial Setup & Data Fetch ---
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const name = await AsyncStorage.getItem("userName");
+        if (name) {
+          setUserName(name); // Use the setter prop
+        }
+      } catch (error) {
+        console.error("Failed to fetch user name:", error);
+      }
+    };
+
+    const askPermissions = async () => {
+      await ensureMediaPermission();
+    };
+
+    fetchUserName();
+    askPermissions();
+  }, [setUserName]);
+
+  // --- Profile Prompt Logic ---
+  useEffect(() => {
+    const checkFirstTimeLogin = async () => {
+      try {
+        const hasCompletedProfilePrompt = await AsyncStorage.getItem("hasCompletedProfilePrompt");
+        if (hasCompletedProfilePrompt !== "true") {
+          setShowProfilePopup(true);
+        }
+      } catch (error) {
+        console.error("Failed to check first-time login status:", error);
+      }
+    };
+    checkFirstTimeLogin();
+  }, []);
+
+  // --- FIX: Animation Trigger on Initial Mount ---
+  useEffect(() => {
+    // If no animations have started, start them immediately for all cards.
+    if (animatedValues.size === 0) {
+        sections.forEach((_, index) => {
+            if (!animatedValues.has(index)) {
+                animatedValues.set(index, new Animated.Value(0));
+            }
+            
+            Animated.spring(animatedValues.get(index), {
+                toValue: 1,
+                friction: 5,
+                tension: 40,
+                delay: 50 * index, // Staggered entry for a nice effect
+                useNativeDriver: true,
+            }).start();
+        });
+    }
+  }, []); // Runs once on mount
+
+  // --- Viewability-based Animation (Kept for potential re-scroll animation) ---
+  useEffect(() => {
+    viewableItems.forEach((item) => {
+      if (item.isViewable) {
+        if (!animatedValues.has(item.index)) {
+          animatedValues.set(item.index, new Animated.Value(0));
+          // Start animation here if it hasn't started yet (unlikely after the fix above, but safe)
+          Animated.spring(animatedValues.get(item.index), {
+            toValue: 1,
+            friction: 5,
+            tension: 40,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+      // Note: No need for an else block to animate out, as cards should remain visible
+    });
+  }, [viewableItems]);
 
   const handleButtonPressIn = (index) => {
     if (!animatedValues.has(index)) {
@@ -142,68 +160,6 @@ const Home = () => {
     }).start();
   };
 
-  const toggleSidebar = () => {
-    if (isSidebarVisible) {
-      Animated.parallel([
-        Animated.timing(sidebarAnim, {
-          toValue: -width,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlayAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setIsSidebarVisible(false));
-    } else {
-      setIsSidebarVisible(true);
-      Animated.parallel([
-        Animated.timing(sidebarAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlayAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
-
-  const closeSidebar = () => {
-    if (isSidebarVisible) {
-      toggleSidebar();
-    }
-  };
-
-  const LogOutHandler = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Yes, Logout",
-          onPress: async () => {
-            try {
-              // Also remove the profile prompt flag on logout for a clean slate
-              await AsyncStorage.removeItem("hasCompletedProfilePrompt");
-              await AsyncStorage.removeItem("jwtToken");
-              navigation.navigate("Login");
-            } catch (error) {
-              console.error("Error removing token:", error);
-              Alert.alert("Logout Failed", "Could not log out. Please try again.");
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
-
   const onViewableItemsChanged = useRef(({ viewableItems: vItems }) => {
     setViewableItems(vItems);
   }).current;
@@ -215,6 +171,7 @@ const Home = () => {
       await AsyncStorage.setItem("hasCompletedProfilePrompt", "true");
       setShowProfilePopup(false);
       if (shouldNavigate) {
+        // Navigate to 'Profile' screen within the current (Main) stack
         navigation.navigate("Profile");
       }
     } catch (error) {
@@ -223,6 +180,7 @@ const Home = () => {
     }
   };
 
+  // --- Modals ---
   const ProfilePopup = () => (
     <Modal
       visible={showProfilePopup}
@@ -273,14 +231,13 @@ const Home = () => {
                 </View>
               </View>
 
-              {/* ENHANCED PROFILE BUTTON */}
               <TouchableOpacity
                 onPress={() => handleProfilePromptClosed(true)}
                 activeOpacity={0.9}
                 style={styles.profileButtonShadow}
               >
                 <LinearGradient
-                  colors={['#FFFFFF', '#E0E0E0']} // White/Gray Gradient
+                  colors={['#FFFFFF', '#E0E0E0']} 
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.profileButton}
@@ -371,6 +328,7 @@ const Home = () => {
     </Modal>
   );
 
+  // --- Main Render ---
   return (
     <View style={styles.appContainer}>
       <StatusBar
@@ -384,6 +342,7 @@ const Home = () => {
       <View style={styles.safeArea}>
         <View style={styles.topBarWrapper}>
           <View style={styles.topBar}>
+            {/* Call the prop function toggleSidebar */}
             <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
               <Ionicons
                 name="person-circle-outline"
@@ -397,78 +356,7 @@ const Home = () => {
               resizeMode="contain"
             />
           </View>
-          {isSidebarVisible && (
-            <TouchableWithoutFeedback onPress={closeSidebar}>
-              <Animated.View
-                style={[styles.overlay, { opacity: overlayAnim }]}
-              />
-            </TouchableWithoutFeedback>
-          )}
         </View>
-
-        {/* ENHANCED SIDEBAR */}
-        <Animated.View
-          style={[styles.sidebar, { transform: [{ translateX: sidebarAnim }] }]}
-        >
-          <View style={styles.sidebarBackground}>
-            <TouchableOpacity
-              onPress={closeSidebar}
-              style={styles.closeSidebarButton}
-            >
-              <Ionicons name="close" color={AppColors.black} size={28} />
-            </TouchableOpacity>
-
-            {/* ENHANCED SIDEBAR HEADER */}
-            <LinearGradient
-              colors={['#34B8FF', '#0575E6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.sidebarHeaderEnhanced}
-            >
-              <View style={styles.userImageWrapperEnhanced}>
-                <Image
-                  source={require("../../assets/defaultLogo.png")}
-                  style={styles.userImage}
-                />
-              </View>
-              <Text style={styles.sidebarTitleEnhanced}>{userName || "Guest User"}</Text>
-              <Text style={styles.sidebarSubtitleEnhanced}>View Profile & Stats</Text>
-            </LinearGradient>
-
-            <ScrollView style={styles.sidebarOptionsWrapper}>
-              {[
-                { icon: "person-outline", text: "Profile", screen: "Profile" },
-                { icon: "stats-chart-outline", text: "Performance", screen: "Performance" },
-                { icon: "help-circle-outline", text: "Support", screen: "Support" },
-                { icon: "radio-button-on", text: "Toss", screen: "TossFlip" },
-                { icon: "copy", text: "Privacy Policy", screen: "PrivacyPolicy" },
-                // { icon: "globe-outline", text: "Web", screen: "WebSocketTest" },
-              ].map(({ icon, text, screen }) => (
-                <TouchableOpacity
-                  key={screen}
-                  style={styles.sidebarItemPatch}
-                  onPress={() => {
-                    navigation.navigate(screen);
-                    closeSidebar();
-                  }}
-                >
-                  <Ionicons name={icon} size={22} color={AppColors.blue} />
-                  <Text style={styles.sidebarItemTextDark}>{text}</Text>
-                </TouchableOpacity>
-              ))}
-
-              <TouchableOpacity style={[styles.sidebarItemPatch, styles.logoutPatch]} onPress={LogOutHandler}>
-                <Ionicons name="log-out-outline" size={22} color={AppColors.error} />
-                <Text style={[styles.sidebarItemTextDark, { color: AppColors.error }]}>Logout</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-          </View>
-
-          <View style={styles.sidebarFooter}>
-            <Text style={styles.footerTextDark}>cricshub ©2025</Text>
-          </View>
-        </Animated.View>
 
         <View style={styles.mainContent}>
           <View style={styles.content}>
@@ -477,7 +365,8 @@ const Home = () => {
               numColumns={2}
               keyExtractor={(item, index) => index.toString()}
               scrollEnabled={true}
-              onViewableItemsChanged={onViewableItemsChanged}
+              // Only needed for re-scrolling animations, initial load is handled by useEffect
+              onViewableItemsChanged={onViewableItemsChanged} 
               viewabilityConfig={viewabilityConfig}
               renderItem={({ item, index }) => {
                 const animatedStyle = {
@@ -486,7 +375,7 @@ const Home = () => {
                       inputRange: [0, 0.5, 1],
                       outputRange: [0, 0.5, 1],
                     })
-                    : 0,
+                    : 0, // Fallback opacity for safety
                   transform: [
                     {
                       scale: animatedValues.has(index)
@@ -494,7 +383,7 @@ const Home = () => {
                           inputRange: [0, 0.5, 1],
                           outputRange: [0.5, 1.1, 1],
                         })
-                        : 0.5,
+                        : 0.5, // Fallback scale for safety
                     },
                   ],
                 };
@@ -553,7 +442,6 @@ export const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
     backgroundColor: AppColors.white,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 50,
   },
   safeArea: { flex: 1, backgroundColor: "transparent" },
   topBarWrapper: {
@@ -561,6 +449,8 @@ export const styles = StyleSheet.create({
     shadowColor: AppColors.black,
     elevation: 3,
     zIndex: 10,
+    // Safely apply status bar padding here
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 50,
   },
   topBar: {
     flexDirection: "row",
@@ -584,148 +474,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: AppColors.white,
   },
-  sidebar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: width * 0.75,
-    height: "100%",
-    borderTopRightRadius: 30,
-    borderBottomRightRadius: 30,
-    overflow: "hidden",
-    zIndex: 100,
-    backgroundColor: AppColors.white,
-    shadowColor: "#000",
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  sidebarBackground: { flex: 1, backgroundColor: AppColors.white },
 
-  // REMOVED: sidebarHeader
-
-  // ENHANCED SIDEBAR HEADER
-  sidebarHeaderEnhanced: {
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 10,
-    paddingTop: Platform.OS === 'ios' ? 80 : (StatusBar.currentHeight || 20) + 40,
-  },
-  userImageWrapperEnhanced: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
-    borderColor: AppColors.white,
-    marginBottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    shadowColor: AppColors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sidebarTitleEnhanced: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: AppColors.white,
-    textAlign: "center",
-  },
-  sidebarSubtitleEnhanced: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 4,
-  },
-  // END ENHANCED SIDEBAR HEADER
-
-  sidebarTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: AppColors.black,
-    textAlign: "center",
-  },
-  sidebarOptionsWrapper: {
-    marginTop: 10,
-    paddingHorizontal: 15,
-  },
-  sidebarItemPatch: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-    paddingVertical: 14, // Slightly larger padding
-    paddingHorizontal: 18,
-    borderRadius: 15, // More rounded corners
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08, // Increased shadow for better lift
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sidebarItemTextDark: {
-    fontSize: 16,
-    marginLeft: 15,
-    fontWeight: "500",
-    color: AppColors.black,
-  },
-  logoutPatch: {
-    backgroundColor: "#fff0f0",
-    borderColor: AppColors.error,
-    borderWidth: 1,
-    marginTop: 20,
-  },
-  footerTextDark: { fontSize: 14, color: AppColors.black, opacity: 0.6 },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 90,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  closeSidebarButton: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : StatusBar.currentHeight + 10,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: AppColors.white, // Added background for visibility
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    zIndex: 101,
-  },
-
-  userImageWrapper: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
-  userImage: { width: 88, height: 88, borderRadius: 44, resizeMode: 'cover' }, // Adjusted size
-
-  sidebarFooter: {
-    position: "absolute",
-    bottom: 25,
-    left: 20,
-    right: 20,
-    alignItems: "center",
-  },
-
-  // Content styles remain the same...
   content: { flex: 1, padding: 20 },
   card: {
     flex: 1,
@@ -773,42 +522,41 @@ export const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Modal/Popup Styles (mostly kept existing)
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalGradient: {
     padding: 25,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 15,
     right: 15,
     zIndex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     borderRadius: 15,
     padding: 5,
   },
   modalHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
     marginTop: 10,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: AppColors.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
   },
   modalBody: {
@@ -817,7 +565,7 @@ export const styles = StyleSheet.create({
   modalText: {
     color: AppColors.white,
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
     marginBottom: 20,
   },
@@ -825,10 +573,10 @@ export const styles = StyleSheet.create({
     marginBottom: 25,
   },
   featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     padding: 12,
     borderRadius: 10,
   },
@@ -841,14 +589,13 @@ export const styles = StyleSheet.create({
   popupFooterText: {
     color: AppColors.white,
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: 15,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
-  // NEW STYLE: Wrapper for the gradient button to hold the shadow
   profileButtonShadow: {
-    width: '100%',
+    width: "100%",
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -856,64 +603,50 @@ export const styles = StyleSheet.create({
     elevation: 8,
     borderRadius: 12,
   },
-  // Replaced profileButton with a gradient-backed TouchableOpacity
   profileButton: {
     paddingVertical: 15,
     borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 0, // Margin now handled by popup body and shadow wrapper
-    flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: "center",
+    marginTop: 0,
+    flexDirection: "row",
+    justifyContent: "center",
   },
-  // ENHANCED BUTTON TEXT
   profileButtonTextEnhanced: {
     color: AppColors.blue,
-    fontWeight: '600', // Changed from 'bold' to '600' (semi-bold) for a thinner look
+    fontWeight: "600",
     fontSize: 16,
   },
-  // Existing fantasy styles...
   countdownContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     padding: 15,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   countdownTitle: {
     color: AppColors.white,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
     marginBottom: 5,
   },
   countdownDate: {
     color: AppColors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 15,
   },
   progressBar: {
     height: 8,
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 4,
     marginBottom: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    width: '75%',
+    height: "100%",
+    width: "75%",
     backgroundColor: AppColors.white,
     borderRadius: 4,
-  },
-  notifyButton: {
-    backgroundColor: AppColors.white,
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  notifyButtonText: {
-    color: AppColors.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 

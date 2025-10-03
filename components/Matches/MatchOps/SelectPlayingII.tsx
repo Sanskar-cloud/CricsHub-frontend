@@ -1,30 +1,28 @@
+import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  StatusBar,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
-  FlatList,
-  Pressable,
   TextInput,
-  Image,
+  TouchableOpacity,
   Vibration,
-  Platform,
-  Animated,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
+  View
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useAppNavigation } from '../../NavigationService';
-import apiService from "../../APIservices";
-import { AppColors } from "../../../assets/constants/colors.js";
-import { AppGradients } from "../../../assets/constants/colors.js";
-import CustomAlertDialog from "../../Customs/CustomDialog.js";
-import LottieView from "lottie-react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppColors, AppGradients } from "../../../assets/constants/colors.js";
+import apiService from "../../APIservices";
+import CustomAlertDialog from "../../Customs/CustomDialog.js";
+import { useAppNavigation } from '../../NavigationService';
 
 const SelectPlayingXI = ({ route }) => {
   const navigation = useAppNavigation();
@@ -48,6 +46,10 @@ const SelectPlayingXI = ({ route }) => {
 
   // guard to prevent duplicate API call in StrictMode
   const initialized = useRef(false);
+  
+  // Define the gradient to be used for the active action button
+  const actionButtonGradient = AppGradients.primaryButton; 
+
 
   // ✅ Initialize match and fetch only Team1
   const initializeTeams = async () => {
@@ -289,7 +291,8 @@ const SelectPlayingXI = ({ route }) => {
   };
 
   const initializeMatchAndTeams = async () => {
-
+    // Re-call the initial fetch logic for retry
+    await initializeTeams();
   };
 
   if (isLoading) {
@@ -361,28 +364,32 @@ const SelectPlayingXI = ({ route }) => {
         >
           {currentSelectionTeam === 1 && (
             <>
-              <Text style={styles.sectionTitle}>
-                <Text style={styles.teamNameHighlight}>
-                  {team1Details?.name}
-                </Text>{" "}
-                - Select Playing XI
-              </Text>
-              <Text style={styles.selectedCount}>
-                Selected:{" "}
-                <Text style={styles.countHighlight}>
-                  {selectedTeam1.length}
+              {/* Header Elements */}
+              <View style={styles.headerContainer}>
+                <Text style={styles.sectionTitle}>
+                  <Text style={styles.teamNameHighlight}>
+                    {team1Details?.name}
+                  </Text>{" "}
+                  - Select Playing XI
                 </Text>
-                /11
-              </Text>
+                <Text style={styles.selectedCount}>
+                  Selected:{" "}
+                  <Text style={styles.countHighlight}>
+                    {selectedTeam1.length}
+                  </Text>
+                  /11
+                </Text>
 
-              <TextInput
-                style={styles.searchBar}
-                placeholder="Search players by name or role..."
-                placeholderTextColor="#888"
-                value={searchQuery}
-                onChangeText={(query) => handleSearch(query, 1)}
-              />
+                <TextInput
+                  style={styles.searchBar}
+                  placeholder="Search players by name or role..."
+                  placeholderTextColor="#888"
+                  value={searchQuery}
+                  onChangeText={(query) => handleSearch(query, 1)}
+                />
+              </View>
 
+              {/* Player List (uses flex: 1 to fill space) */}
               <FlatList
                 data={filteredTeam1Players}
                 keyExtractor={(item) =>
@@ -391,49 +398,72 @@ const SelectPlayingXI = ({ route }) => {
                 renderItem={({ item }) => renderPlayerItem({ item, team: 1 })}
                 contentContainerStyle={styles.playerList}
                 keyboardShouldPersistTaps="handled"
+                style={styles.flatList} // Apply flatList style with flex: 1
               />
 
+              {/* Action Button (fixed position/footer) */}
               <Pressable
                 style={[
                   styles.actionButton,
-                  selectedTeam1.length !== 11 && styles.disabledButton,
+                  selectedTeam1.length !== 11 ? styles.disabledButton : null,
                 ]}
                 onPress={handleContinueToTeam2}
+                disabled={selectedTeam1.length !== 11}
               >
-                <Text style={styles.actionButtonText}>
-                  Continue to{" "}
-                  <Text style={styles.teamNameHighlightSmall}>
-                    {team2Details?.name || "Team 2"}
-                  </Text>
-                </Text>
+                {selectedTeam1.length === 11 ? (
+                  <LinearGradient
+                    colors={actionButtonGradient}
+                    style={styles.actionButtonGradient}
+                  >
+                    <Text style={styles.actionButtonText}>
+                      Continue to{" "}
+                      <Text style={styles.teamNameHighlightSmall}>
+                        {team2Details?.name || "Team 2"}
+                      </Text>
+                    </Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.actionButtonDisabledView}>
+                    <Text style={styles.actionButtonText}>
+                      Continue to{" "}
+                      <Text style={styles.teamNameHighlightSmall}>
+                        {team2Details?.name || "Team 2"}
+                      </Text>
+                    </Text>
+                  </View>
+                )}
               </Pressable>
             </>
           )}
 
           {currentSelectionTeam === 2 && team2Details && (
             <>
-              <Text style={styles.sectionTitle}>
-                <Text style={styles.teamNameHighlight}>
-                  {team2Details?.name}
-                </Text>{" "}
-                - Select Playing XI
-              </Text>
-              <Text style={styles.selectedCount}>
-                Selected:{" "}
-                <Text style={styles.countHighlight}>
-                  {selectedTeam2.length}
+              {/* Header Elements */}
+              <View style={styles.headerContainer}>
+                <Text style={styles.sectionTitle}>
+                  <Text style={styles.teamNameHighlight}>
+                    {team2Details?.name}
+                  </Text>{" "}
+                  - Select Playing XI
                 </Text>
-                /11
-              </Text>
+                <Text style={styles.selectedCount}>
+                  Selected:{" "}
+                  <Text style={styles.countHighlight}>
+                    {selectedTeam2.length}
+                  </Text>
+                  /11
+                </Text>
 
-              <TextInput
-                style={styles.searchBar}
-                placeholder="Search players by name or role..."
-                placeholderTextColor="#888"
-                value={searchQuery}
-                onChangeText={(query) => handleSearch(query, 2)}
-              />
+                <TextInput
+                  style={styles.searchBar}
+                  placeholder="Search players by name or role..."
+                  placeholderTextColor="#888"
+                  value={searchQuery}
+                  onChangeText={(query) => handleSearch(query, 2)}
+                />
+              </View>
 
+              {/* Player List (uses flex: 1 to fill space) */}
               <FlatList
                 data={filteredTeam2Players}
                 keyExtractor={(item) =>
@@ -442,17 +472,30 @@ const SelectPlayingXI = ({ route }) => {
                 renderItem={({ item }) => renderPlayerItem({ item, team: 2 })}
                 contentContainerStyle={styles.playerList}
                 keyboardShouldPersistTaps="handled"
+                style={styles.flatList} // Apply flatList style with flex: 1
               />
 
+              {/* Action Button (fixed position/footer) */}
               <Pressable
                 style={[
                   styles.actionButton,
-                  selectedTeam2.length !== 11 && styles.disabledButton,
+                  selectedTeam2.length !== 11 ? styles.disabledButton : null,
                 ]}
                 onPress={handleStartMatch}
-                disabled={isLoading}
+                disabled={selectedTeam2.length !== 11}
               >
-                <Text style={styles.actionButtonText}>Start Match</Text>
+                {selectedTeam2.length === 11 ? (
+                  <LinearGradient
+                    colors={actionButtonGradient}
+                    style={styles.actionButtonGradient}
+                  >
+                    <Text style={styles.actionButtonText}>Start Match</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.actionButtonDisabledView}>
+                    <Text style={styles.actionButtonText}>Start Match</Text>
+                  </View>
+                )}
               </Pressable>
             </>
           )}
@@ -466,17 +509,21 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: AppColors.BgColor,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 0,
+    // Removed specific Android padding here, relying on SafeAreaView and internal view padding
   },
   container: {
     flex: 1,
     backgroundColor: AppColors.BgColor,
   },
   mainScreenContent: {
-    flex: 1,
+    flex: 1, // Crucial: Takes up all available space
     paddingHorizontal: 20,
-    paddingTop: 20,
     backgroundColor: AppColors.BgColor,
+  },
+  headerContainer: {
+    // Contains header and search bar, keeps them above the list
+    paddingTop: 20, // Add top padding here instead of SafeAreaView
+    paddingBottom: 5,
   },
   loadingContainer: {
     flex: 1,
@@ -558,9 +605,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  flatList: {
+    flex: 1, // Crucial: List takes remaining vertical space
+  },
   playerList: {
     flexGrow: 1,
-    paddingBottom: 80,
+    paddingBottom: 100, // Sufficient padding to prevent the last item from being hidden by the fixed button
   },
   playerButton: {
     marginVertical: 6,
@@ -629,23 +679,39 @@ const styles = StyleSheet.create({
   checkIcon: {
     marginLeft: 10,
   },
+  // --- ACTION BUTTON STYLES (MODIFIED) ---
   actionButton: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: AppColors.primaryBlue,
     borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: "center",
-    elevation: 5,
+    overflow: 'hidden',
+    // Base shadow for the active state
+    elevation: 5, 
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 5,
   },
-  disabledButton: {
+  actionButtonGradient: {
+    // Active button fill (e.g., AppGradients.primaryButton)
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: 'center',
+    width: '100%',
+  },
+  actionButtonDisabledView: {
+    // Disabled button fill
     backgroundColor: AppColors.infoGrey,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: 'center',
+    width: '100%',
+  },
+  disabledButton: {
+    // Overrides active button shadow/elevation when disabled
+    backgroundColor: 'transparent',
     elevation: 0,
     shadowOpacity: 0,
   },

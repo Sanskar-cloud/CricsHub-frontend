@@ -1,40 +1,43 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useRef, useState } from "react";
+import { RouteProp, useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import moment from "moment";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  FlatList,
+  Platform,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  FlatList,
-  Animated,
-  Alert,
-  Dimensions,
-  StatusBar,
-  Platform,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
-import { useNavigation, RouteProp } from "@react-navigation/native";
 import apiService from "../../APIservices";
-import moment from "moment";
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Info from "./TournamentInfo";
-import Teams from "./TournamentTeams";
-import Matches from "./TournamentMatches";
-import PointsTable from "./TournamentPointtable";
-import { AppGradients } from "../../../assets/constants/colors";
+// FINAL FIX: Renaming default imports to avoid mixing default/named exports
+import InfoComponent from "./TournamentInfo";
+import MatchesComponent from "./TournamentMatches";
+import PointsTableComponent from "./TournamentPointtable";
+import TeamsComponent from "./TournamentTeams";
+
+// Assuming AppGradients is available here
 
 const { width, height } = Dimensions.get("window");
-const HEADER_MAX_HEIGHT = 120; // Reduced header height
-const HEADER_MIN_HEIGHT = 60 + (StatusBar.currentHeight || 0);
+const HEADER_MAX_HEIGHT = 120; 
+const HEADER_MIN_HEIGHT = 60; 
 const TAB_BAR_HEIGHT = 60;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
-
-// Calculate status bar height for different platforms
 const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
+
+// Calculate the effective minimum height including status bar
+const EFFECTIVE_HEADER_MIN_HEIGHT = HEADER_MIN_HEIGHT + STATUS_BAR_HEIGHT; 
+const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+const effectiveHeaderScrollDistance = (HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT) - EFFECTIVE_HEADER_MIN_HEIGHT;
+
+// FIX: Define the content offset for the initial scroll view padding (Expanded Header + Tab Bar)
+const INITIAL_CONTENT_PADDING = HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT + TAB_BAR_HEIGHT + 10; // Added 10 for proper visual gap
 
 type ManageTournamentsRouteParams = {
   tab: string;
@@ -65,7 +68,7 @@ export default function ManageTournaments({
 
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+    outputRange: [HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT, EFFECTIVE_HEADER_MIN_HEIGHT],
     extrapolate: "clamp",
   });
 
@@ -83,10 +86,11 @@ export default function ManageTournaments({
 
   const tabTopPosition = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
-    outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+    // FIX: Tab bar should start at the end of the fully expanded header
+    outputRange: [HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT, EFFECTIVE_HEADER_MIN_HEIGHT],
     extrapolate: "clamp",
   });
-
+  
   const fetchTournamentDetails = async (tournamentId: string) => {
     try {
       setLoading(true);
@@ -159,11 +163,11 @@ export default function ManageTournaments({
 
   const handleScrollEnd = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.y;
-    const halfwayPoint = HEADER_SCROLL_DISTANCE / 2;
+    const halfwayPoint = effectiveHeaderScrollDistance / 2;
 
-    if (scrollPosition > halfwayPoint && scrollPosition < HEADER_SCROLL_DISTANCE) {
+    if (scrollPosition > halfwayPoint && scrollPosition < effectiveHeaderScrollDistance) {
       Animated.timing(scrollY, {
-        toValue: HEADER_SCROLL_DISTANCE,
+        toValue: effectiveHeaderScrollDistance,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -187,13 +191,13 @@ export default function ManageTournaments({
         colors={["#34B8FF", "#192f6a"]}
         style={styles.gradientOverlay}
       >
-        <SafeAreaView style={styles.safeArea} edges={['right', 'left', 'top']}>
+        <View style={{ flex: 1 }}> 
           {/* Simplified Header Area */}
           <Animated.View style={[styles.headerArea, { height: headerHeight }]}>
             <Animated.View
               style={[
                 styles.headerContentWrapper,
-                { opacity: headerContentOpacity },
+                { opacity: headerContentOpacity, justifyContent: 'flex-start' },
               ]}
             >
               <TouchableOpacity
@@ -238,13 +242,6 @@ export default function ManageTournaments({
           <Animated.View
             style={[styles.collapsedHeader, { opacity: collapsedTitleOpacity }]}
           >
-            {/* <TouchableOpacity
-              style={styles.backButtonCollapsed}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.7}
-            >
-              <Icon name="arrow-back" size={24} color="white" />
-            </TouchableOpacity> */}
             <Text style={styles.collapsedHeaderText} numberOfLines={1}>
               {tournamentDetails?.name || "Tournament"}
             </Text>
@@ -254,7 +251,7 @@ export default function ManageTournaments({
           <Animated.View
             style={[
               styles.toggleContainer,
-              { transform: [{ translateY: tabTopPosition }] },
+              { top: 0, transform: [{ translateY: tabTopPosition }] },
             ]}
           >
             <FlatList
@@ -271,11 +268,14 @@ export default function ManageTournaments({
           {/* Main Content Area */}
           <Animated.ScrollView
             style={styles.mainContentScrollView}
-            contentContainerStyle={{
-              paddingTop: HEADER_MAX_HEIGHT + TAB_BAR_HEIGHT,
-              paddingHorizontal: 15,
-              paddingBottom: 20,
-            }}
+            contentContainerStyle={
+              {
+                // FIX: Use the calculated offset for perfect alignment and gap
+                paddingTop: INITIAL_CONTENT_PADDING,
+                paddingHorizontal: 15,
+                paddingBottom: 20,
+              }
+            }
             scrollEventThrottle={16}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -300,16 +300,17 @@ export default function ManageTournaments({
               </View>
             ) : (
               <>
-                {activeTab === "INFO" && <Info id={id} isCreator={isCreator} />}
-                {activeTab === "TEAMS" && <Teams id={id} isCreator={isCreator} />}
+                {/* Components that caused the ReferenceError */}
+                {activeTab === "INFO" && <InfoComponent id={id} isCreator={isCreator} />}
+                {activeTab === "TEAMS" && <TeamsComponent id={id} isCreator={isCreator} />}
                 {activeTab === "MATCHES" && (
-                  <Matches id={id} isCreator={isCreator} />
+                  <MatchesComponent id={id} isCreator={isCreator} />
                 )}
-                {activeTab === "POINTS TABLE" && <PointsTable id={id} />}
+                {activeTab === "POINTS TABLE" && <PointsTableComponent id={id} />}
               </>
             )}
           </Animated.ScrollView>
-        </SafeAreaView>
+        </View>
       </LinearGradient>
     </View>
   );
@@ -319,10 +320,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa"
-  },
-
-  safeArea: {
-    flex: 1,
   },
 
   gradientOverlay: {
@@ -348,10 +345,11 @@ const styles = StyleSheet.create({
 
   headerContentWrapper: {
     width: "100%",
-    paddingHorizontal: 20,
-    justifyContent: "center",
+    paddingHorizontal: 10,
+    justifyContent: "flex-start", 
     alignItems: "center",
     flex: 1,
+    paddingTop: 10, 
   },
 
   backButton: {
@@ -361,17 +359,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 20,
     padding: 8,
-    // Center vertically within the header
-    top: '50%',
-    marginTop: -20, // Half of button height (icon size 24 + padding 16 = ~40/2 = 20)
+    top: STATUS_BAR_HEIGHT + 10, 
   },
 
   tournamentDetailsTextContainer: {
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    marginTop: 10,
-    paddingHorizontal: 50, // Add padding to prevent text overlapping with back button
+    paddingTop: 10, 
+    paddingHorizontal: 50, 
   },
 
   tournamentNameHeader: {
@@ -379,14 +375,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
-    marginBottom: 6
+    marginBottom: 4 
   },
 
   tournamentSubDetail: {
     fontSize: 14,
     color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 0, 
     fontWeight: "500",
   },
 
@@ -395,7 +391,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: HEADER_MIN_HEIGHT,
+    height: EFFECTIVE_HEADER_MIN_HEIGHT, 
     backgroundColor: "#34B8FF",
     flexDirection: "row",
     justifyContent: "center",
@@ -415,19 +411,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     flex: 1,
     textAlign: 'center',
-    paddingHorizontal: 50, // Add padding to prevent text overlapping with back button
-  },
-
-  backButtonCollapsed: {
-    position: "absolute",
-    left: 15,
-    zIndex: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 20,
-    padding: 8,
-    // Center vertically within the collapsed header
-    top: '50%',
-    marginTop: -20, // Half of button height
+    paddingHorizontal: 50, 
   },
 
   toggleContainer: {
@@ -439,7 +423,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     zIndex: 9,
-    overflow: 'hidden', // Prevent overflow
+    overflow: 'hidden', 
   },
 
   toggleScrollViewContent: {
@@ -459,8 +443,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
-    minWidth: 100, // Fixed width for better alignment
-    height: 40, // Fixed height for consistent sizing
+    minWidth: 100,
+    height: 40, 
   },
 
   activeToggleButton: {
@@ -476,7 +460,7 @@ const styles = StyleSheet.create({
   toggleText: {
     color: "#fff",
     fontWeight: "600",
-    fontSize: 13, // Slightly smaller to fit better
+    fontSize: 13,
     letterSpacing: 0.5,
     textAlign: 'center',
   },
@@ -493,7 +477,7 @@ const styles = StyleSheet.create({
 
   loadingOverlay: {
     flex: 1,
-    minHeight: height - (HEADER_MIN_HEIGHT + TAB_BAR_HEIGHT + STATUS_BAR_HEIGHT + 30),
+    minHeight: height - (EFFECTIVE_HEADER_MIN_HEIGHT + TAB_BAR_HEIGHT + 30),
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.95)",
@@ -516,7 +500,7 @@ const styles = StyleSheet.create({
 
   errorContainer: {
     flex: 1,
-    minHeight: height - (HEADER_MIN_HEIGHT + TAB_BAR_HEIGHT + STATUS_BAR_HEIGHT + 30),
+    minHeight: height - (EFFECTIVE_HEADER_MIN_HEIGHT + TAB_BAR_HEIGHT + 30),
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF3F3",

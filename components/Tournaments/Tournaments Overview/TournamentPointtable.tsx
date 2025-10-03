@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppNavigation } from '../../NavigationService';
-import apiService from '../../APIservices';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
 import { AppColors } from '../../../assets/constants/colors';
+import apiService from '../../APIservices';
+import { useAppNavigation } from '../../NavigationService';
 
 const PointsTable = ({ id }) => {
   const navigation = useAppNavigation();

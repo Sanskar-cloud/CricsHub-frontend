@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, Pressable, ScrollView, Alert, Animated } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Picker } from '@react-native-picker/picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import moment from 'moment';
-import { useAppNavigation } from '../../NavigationService';
-import apiService from '../../APIservices';
-import { AppColors } from '../../../assets/constants/colors';
+import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import moment from 'moment';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import apiService from '../../APIservices';
+import { useAppNavigation } from '../../NavigationService';
 
 // Define the color palette and gradients for consistency from AllMatches component
 const AppColorsFromAllMatches = {
@@ -271,7 +271,13 @@ export const Matches = ({ id, isCreator }) => {
 
     if (success) {
       Alert.alert("Success", "Match scheduled successfully!");
-      setIsManualModalOpen(false);
+      setShowPlayOffMatchScheduler(false); // Close Playoff modal
+      // Reset manual match inputs after successful schedule
+      setManualMatchTeamA(null);
+      setManualMatchTeamB(null);
+      setManualMatchDate(new Date());
+      setManualMatchTime(new Date());
+      setManualMatchVenue('');
       fetchMatchDetails(id);
     } else {
       console.error("Manual match schedule error:", error);
@@ -283,7 +289,7 @@ export const Matches = ({ id, isCreator }) => {
     if (match.status === 'Completed') return { text: 'Completed', color: AppColorsFromAllMatches.pastGray, icon: 'check-circle' };
     if (match.status === 'Live') return { text: 'LIVE', color: AppColorsFromAllMatches.liveGreen, icon: 'live-tv' };
     if (match.status === 'Upcoming') return { text: 'UPCOMING', color: AppColorsFromAllMatches.upcomingOrange, icon: 'schedule' };
-    return { text: 'Unscheduled', color: AppColors.infoGrey, icon: 'info' };
+    return { text: 'Unscheduled', color: AppColorsFromAllMatches.infoGrey, icon: 'info' };
   };
 
   const MatchCard = ({ match, onPress, isCreator, tournamentData }) => {
@@ -307,8 +313,8 @@ export const Matches = ({ id, isCreator }) => {
 
     const statusInfo = getStatusInfo(match);
 
-    const matchDateFormatted = match?.matchDate ? `${match.matchDate[2]}-${match.matchDate[1]}-${match.matchDate[0]}` : 'N/A';
-    const matchTimeFormatted = match?.matchTime ? `${match.matchTime[0]}:${match.matchTime[1]}` : 'N/A';
+    const matchDateFormatted = match?.matchDate ? moment([match.matchDate[0], match.matchDate[1] - 1, match.matchDate[2]]).format('DD-MMM-YYYY') : 'N/A';
+    const matchTimeFormatted = match?.matchTime ? moment().hour(match.matchTime[0]).minute(match.matchTime[1]).format('h:mm A') : 'N/A';
     const showScores = match.status === 'Completed' || match.status === 'Live';
     const showWinner = match.status === 'Completed' && match.winner;
 
@@ -427,12 +433,89 @@ export const Matches = ({ id, isCreator }) => {
     );
   };
 
+  // --- NEW Empty State Component ---
+  const EmptyMatchState = ({ isCreator, aiMatchScheduleHandler, setIsManualModalOpen, canSchedulePlayoff, setShowPlayOffMatchScheduler }) => (
+    // FIX: Removed the outer container margin/padding and let this container manage the full space
+    <View style={styles.emptyContentWrapper}>
+      <MaterialCommunityIcons 
+        name="calendar-check-outline" 
+        size={80} 
+        color={AppColorsFromAllMatches.primaryBlue} 
+        style={styles.emptyIcon} 
+      />
+      
+      <Text style={styles.emptyText}>No Matches Scheduled Yet!</Text>
+      <Text style={styles.emptySubText}>
+        {isCreator
+          ? "You can use the AI scheduler for automatic setup or schedule them manually."
+          : "Matches will appear here once the organizer schedules them."
+        }
+      </Text>
+
+      {isCreator && (
+        <>
+          <View style={styles.scheduleOptions}>
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={() => setIsManualModalOpen(true)}
+            >
+              <LinearGradient
+                colors={[AppColorsFromAllMatches.primaryBlue, AppColorsFromAllMatches.secondaryBlue]}
+                style={styles.buttonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Icon name="person" size={40} color="#fff" />
+                <Text style={styles.scheduleButtonText}>Schedule Manually</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={aiMatchScheduleHandler}
+            >
+              <LinearGradient
+                colors={['#6c5ce7', '#a29bfe']}
+                style={styles.buttonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Icon name="smart-toy" size={40} color="#fff" />
+                <Text style={styles.scheduleButtonText}>Use AI Scheduler</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Playoff Scheduler Button */}
+          {canSchedulePlayoff && (
+            <TouchableOpacity
+              style={[styles.bottomButton, styles.playoffButton, { marginTop: 20 }]}
+              onPress={() => setShowPlayOffMatchScheduler(true)}
+            >
+              <LinearGradient
+                colors={['#ff7e5f', '#feb47b']}
+                style={styles.buttonGradientFull}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Icon name="emoji-events" size={20} color="#fff" />
+                <Text style={styles.bottomButtonText}>Schedule Playoff Match</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </>
+      )}
+    </View>
+  );
+  // --- END NEW Empty State Component ---
+
   return (
     <View style={styles.matchTab}>
-      {loading && <ActivityIndicator size="large" color={AppColors.primary} />}
+      {loading && <ActivityIndicator size="large" color={AppColorsFromAllMatches.primaryBlue} style={styles.fullLoader} />}
       {!loading && (
         <>
           {matchDetails.length > 0 ? (
+            // ScrollView for listing matches
             <ScrollView style={styles.matchesContainer}>
               {matchDetails.map((match, index) => (
                 <MatchCard 
@@ -443,59 +526,48 @@ export const Matches = ({ id, isCreator }) => {
                   tournamentData={tournamentData} 
                 />
               ))}
+              
+              {/* Playoff Button placed inside the ScrollView for proper scrolling */}
+              {isCreator && canSchedulePlayoff && (
+                <TouchableOpacity
+                  style={[styles.bottomButton, styles.playoffButton, { marginBottom: 16 }]}
+                  onPress={() => setShowPlayOffMatchScheduler(true)}
+                >
+                  <LinearGradient
+                    colors={['#ff7e5f', '#feb47b']}
+                    style={styles.buttonGradientFull}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Icon name="emoji-events" size={20} color="#fff" />
+                    <Text style={styles.bottomButtonText}>Schedule Playoff Match</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
             </ScrollView>
           ) : (
-            <View style={styles.emptyContainer}>
-              {isCreator && (
-                <>
-                  <Text style={styles.emptyText}>No matches scheduled yet.</Text>
-                  <Text style={styles.emptySubText}>How would you like to schedule the matches?</Text>
-                  <View style={styles.scheduleOptions}>
-                    <TouchableOpacity
-                      style={[styles.scheduleButton, styles.manualButton]}
-                      onPress={() => setIsManualModalOpen(true)}
-                    >
-                      <LinearGradient
-                        colors={[AppColors.primary, '#0056b3']}
-                        style={styles.buttonGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Icon name="person" size={40} color="#fff" />
-                        <Text style={styles.scheduleButtonText}>Manually</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.scheduleButton, styles.aiButton]}
-                      onPress={aiMatchScheduleHandler}
-                    >
-                      <LinearGradient
-                        colors={['#6c5ce7', '#a29bfe']}
-                        style={styles.buttonGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Icon name="smart-toy" size={40} color="#fff" />
-                        <Text style={styles.scheduleButtonText}>Using AI</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </View>
+            // Empty State Component that takes up the remaining space
+            <EmptyMatchState 
+              isCreator={isCreator}
+              aiMatchScheduleHandler={aiMatchScheduleHandler}
+              setIsManualModalOpen={setIsManualModalOpen}
+              canSchedulePlayoff={canSchedulePlayoff}
+              setShowPlayOffMatchScheduler={setShowPlayOffMatchScheduler}
+            />
           )}
         </>
       )}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
+      {/* Schedule More Matches Button - Floating at the bottom */}
       {isCreator && matchDetails.length > 0 && (
         <TouchableOpacity
-          style={[styles.bottomButton, styles.scheduleMoreButton]}
+          style={styles.bottomButtonFloating}
           onPress={() => setIsManualModalOpen(true)}
         >
           <LinearGradient
-            colors={[AppColors.primary, '#0056b3']}
+            colors={[AppColorsFromAllMatches.primaryBlue, AppColorsFromAllMatches.secondaryBlue]}
             style={styles.buttonGradientFull}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -506,7 +578,9 @@ export const Matches = ({ id, isCreator }) => {
         </TouchableOpacity>
       )}
 
-      {/* Edit Match Modal */}
+      {/* Modals (Edit, Manual, Playoff) */}
+      
+      {/* Edit Match Modal (existing) */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -516,7 +590,7 @@ export const Matches = ({ id, isCreator }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <LinearGradient
-              colors={[AppColors.primary, '#0056b3']}
+              colors={[AppColorsFromAllMatches.primaryBlue, AppColorsFromAllMatches.secondaryBlue]}
               style={styles.modalHeader}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -534,7 +608,7 @@ export const Matches = ({ id, isCreator }) => {
             <ScrollView style={styles.modalContent}>
               <Text style={styles.label}>Venue</Text>
               <View style={styles.inputContainer}>
-                <Icon name="location-on" size={20} color={AppColors.primary} style={styles.inputIcon} />
+                <Icon name="location-on" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.inputIcon} />
                 <TextInput
                   placeholder="Enter venue"
                   placeholderTextColor="#999"
@@ -549,7 +623,7 @@ export const Matches = ({ id, isCreator }) => {
                 onPress={() => setShowDatePicker(true)}
                 style={styles.inputContainer}
               >
-                <Icon name="calendar-today" size={20} color={AppColors.primary} style={styles.inputIcon} />
+                <Icon name="calendar-today" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.inputIcon} />
                 <Text style={styles.dateTimeText}>
                   {matchDate ? moment(matchDate).format('MMMM Do, YYYY') : 'Select Date'}
                 </Text>
@@ -572,7 +646,7 @@ export const Matches = ({ id, isCreator }) => {
                 onPress={() => setShowTimePicker(true)}
                 style={styles.inputContainer}
               >
-                <Icon name="access-time" size={20} color={AppColors.primary} style={styles.inputIcon} />
+                <Icon name="access-time" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.inputIcon} />
                 <Text style={styles.dateTimeText}>
                   {matchTime ? moment(matchTime).format('h:mm A') : 'Select Time'}
                 </Text>
@@ -602,7 +676,7 @@ export const Matches = ({ id, isCreator }) => {
         </View>
       </Modal>
 
-      {/* Manual Match Scheduling Modal */}
+      {/* Manual Match Scheduling Modal (Existing) */}
       {isManualModalOpen && (
         <Modal
           transparent={true}
@@ -613,7 +687,7 @@ export const Matches = ({ id, isCreator }) => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainerLarge}>
               <LinearGradient
-                colors={[AppColors.primary, '#0056b3']}
+                colors={[AppColorsFromAllMatches.primaryBlue, AppColorsFromAllMatches.secondaryBlue]}
                 style={styles.modalHeader}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -631,7 +705,7 @@ export const Matches = ({ id, isCreator }) => {
               <ScrollView style={styles.modalContent}>
                 <Text style={styles.label}>Team A</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon name="people" size={20} color={AppColors.primary} style={styles.pickerIcon} />
+                  <Icon name="people" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.pickerIcon} />
                   <Picker
                     selectedValue={manualMatchTeamA}
                     onValueChange={(itemValue) => setManualMatchTeamA(itemValue)}
@@ -646,7 +720,7 @@ export const Matches = ({ id, isCreator }) => {
 
                 <Text style={styles.label}>Team B</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon name="people" size={20} color={AppColors.primary} style={styles.pickerIcon} />
+                  <Icon name="people" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.pickerIcon} />
                   <Picker
                     selectedValue={manualMatchTeamB}
                     onValueChange={(itemValue) => setManualMatchTeamB(itemValue)}
@@ -664,7 +738,7 @@ export const Matches = ({ id, isCreator }) => {
                   onPress={() => setManualMatchShowDatePicker(true)}
                   style={styles.inputContainer}
                 >
-                  <Icon name="calendar-today" size={20} color={AppColors.primary} style={styles.inputIcon} />
+                  <Icon name="calendar-today" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.inputIcon} />
                   <Text style={styles.dateTimeText}>
                     {manualMatchDate ? moment(manualMatchDate).format('MMMM Do, YYYY') : 'Select Date'}
                   </Text>
@@ -687,7 +761,7 @@ export const Matches = ({ id, isCreator }) => {
                   onPress={() => setManualMatchShowTimePicker(true)}
                   style={styles.inputContainer}
                 >
-                  <Icon name="access-time" size={20} color={AppColors.primary} style={styles.inputIcon} />
+                  <Icon name="access-time" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.inputIcon} />
                   <Text style={styles.dateTimeText}>
                     {manualMatchTime ? moment(manualMatchTime).format('h:mm A') : 'Select Time'}
                   </Text>
@@ -706,7 +780,7 @@ export const Matches = ({ id, isCreator }) => {
 
                 <Text style={styles.label}>Venue</Text>
                 <View style={styles.pickerContainer}>
-                  <Icon name="location-on" size={20} color={AppColors.primary} style={styles.pickerIcon} />
+                  <Icon name="location-on" size={20} color={AppColorsFromAllMatches.primaryBlue} style={styles.pickerIcon} />
                   <Picker
                     selectedValue={manualMatchVenue}
                     onValueChange={(itemValue) => setManualMatchVenue(itemValue)}
@@ -733,7 +807,7 @@ export const Matches = ({ id, isCreator }) => {
         </Modal>
       )}
 
-      {/* Playoff Match Scheduling Modal */}
+      {/* Playoff Match Scheduling Modal (Existing) */}
       <Modal
         visible={showPlayOffMatchScheduler}
         transparent={true}
@@ -874,18 +948,25 @@ export const Matches = ({ id, isCreator }) => {
 const styles = StyleSheet.create({
   matchTab: {
     flex: 1,
-    backgroundColor: AppColors.background,
+    backgroundColor: AppColorsFromAllMatches.lightBackground,
   },
   matchesContainer: {
     padding: 16,
+    // Add bottom padding to ensure content above floating button is accessible
+    paddingBottom: 80, 
+  },
+  fullLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
-  // New Styles from AllMatches component
+  // Match Card Styles (No changes needed)
   matchCard: {
     backgroundColor: AppColorsFromAllMatches.white,
     borderRadius: 15,
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: AppColorsFromAllMatches.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -1024,50 +1105,57 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Existing styles that were not changed
-  emptyContainer: {
-    flex: 1,
+  // --- NEW/UPDATED Empty State Styles ---
+  emptyContentWrapper: {
+    // FIX: Removed horizontal margin here so the parent ScrollView's padding takes effect
+    flex: 1, 
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    marginTop: '20%',
+    marginTop: '10%',
+    backgroundColor: AppColorsFromAllMatches.cardBackground,
+    marginHorizontal: 16, // Kept this margin for the card effect on the empty state itself
+    borderRadius: 16,
+    shadowColor: AppColorsFromAllMatches.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  emptyIcon: {
+    marginBottom: 20,
+    opacity: 0.8,
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: 22,
     color: AppColorsFromAllMatches.darkText,
     textAlign: 'center',
-    marginBottom: 8,
-    fontWeight: 'bold',
+    marginBottom: 10,
+    fontWeight: '800',
   },
   emptySubText: {
-    fontSize: 16,
+    fontSize: 15,
     color: AppColorsFromAllMatches.mediumText,
     textAlign: 'center',
     marginBottom: 30,
+    lineHeight: 22,
   },
   scheduleOptions: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 10,
+    marginBottom: 20,
   },
   scheduleButton: {
-    width: 140,
-    height: 140,
-    marginHorizontal: 15,
-    borderRadius: 20,
+    flex: 1, 
+    marginHorizontal: 8,
+    borderRadius: 15,
     overflow: 'hidden',
-  },
-  manualButton: {
-    shadowColor: AppColorsFromAllMatches.primaryBlue,
+    height: 140,
+    shadowColor: AppColorsFromAllMatches.black,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  aiButton: {
-    shadowColor: '#6c5ce7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
   },
@@ -1075,37 +1163,78 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
   },
   scheduleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#fff',
-    marginTop: 12,
+    marginTop: 8,
+    textAlign: 'center',
   },
+  // --- END Empty State Styles ---
+
   errorText: {
     color: AppColorsFromAllMatches.errorRed,
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
   },
+  
+  bottomButtonFloating: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: AppColorsFromAllMatches.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  bottomButton: {
+    borderRadius: 12,
+    marginHorizontal: 16,
+    overflow: 'hidden',
+    shadowColor: AppColorsFromAllMatches.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonGradientFull: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  bottomButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  
+  // Modal Styles (No changes needed)
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)', 
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContainer: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: AppColorsFromAllMatches.cardBackground,
     borderRadius: 16,
     overflow: 'hidden',
     maxHeight: '80%',
   },
   modalContainerLarge: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: AppColorsFromAllMatches.cardBackground,
     borderRadius: 16,
     overflow: 'hidden',
     maxHeight: '90%',
@@ -1119,7 +1248,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: AppColorsFromAllMatches.white,
   },
   closeIcon: {
     padding: 4,
@@ -1138,10 +1267,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: AppColorsFromAllMatches.cardBorder,
     borderRadius: 10,
     padding: 12,
     marginBottom: 15,
+    backgroundColor: AppColorsFromAllMatches.lightBackground,
   },
   inputIcon: {
     marginRight: 10,
@@ -1150,6 +1280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: AppColorsFromAllMatches.darkText,
+    padding: 0,
   },
   dateTimeText: {
     fontSize: 16,
@@ -1159,10 +1290,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: AppColorsFromAllMatches.cardBorder,
     borderRadius: 10,
     marginBottom: 15,
     paddingHorizontal: 10,
+    backgroundColor: AppColorsFromAllMatches.lightBackground,
   },
   pickerIcon: {
     marginRight: 10,
@@ -1173,6 +1305,7 @@ const styles = StyleSheet.create({
   },
   modalButtonContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 4,
     marginTop: 20,
     marginBottom: 10,
@@ -1180,61 +1313,21 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: AppColorsFromAllMatches.primaryBlue,
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    flex: 1,
     borderRadius: 10,
-    minWidth: 140,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   cancelBtn: {
     backgroundColor: AppColorsFromAllMatches.errorRed,
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    flex: 1,
     borderRadius: 10,
-    minWidth: 140,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: AppColorsFromAllMatches.white,
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  bottomButton: {
-    borderRadius: 12,
-    margin: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  playoffButton: {
-    marginBottom: 8,
-  },
-  scheduleMoreButton: {
-    marginTop: 8,
-  },
-  buttonGradientFull: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  bottomButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
   },
 });
 

@@ -1,9 +1,9 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAppNavigation } from './NavigationService';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons } from '@expo/vector-icons';
 
 const Footer = () => {
   const [activeTab, setActiveTab] = useState('HOME');
@@ -87,17 +87,18 @@ const styles = StyleSheet.create({
   footerWrapper: {
     borderRadius: 30,
     shadowColor: '#000',
-    shadowOpacity: 0.25,   // Stronger shadow
+    shadowOpacity: 0.25,  
     shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,      // More spread
-    elevation: 15,         // Higher for Android
+    shadowRadius: 12,      
+    elevation: 15,        
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    height: 70,
+    height: 80,
     borderRadius: 30,
+    marginHorizontal:10,
     backgroundColor: 'rgba(255,255,255,0.95)',
   },
   footerButton: {
