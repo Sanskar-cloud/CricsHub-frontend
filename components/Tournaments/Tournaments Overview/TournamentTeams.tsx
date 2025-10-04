@@ -7,7 +7,6 @@ import {
   FlatList,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -17,7 +16,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -31,12 +29,12 @@ const { width, height } = Dimensions.get('window');
 const AppColors = {
   background: '#F0F2F5',
   surface: '#FFFFFF',
-  text: '#1F2937', 
+  text: '#1F2937',
   textSecondary: '#6B7280',
   primary: '#10B981', // Emerald Green for positive actions
   primaryDark: '#047857',
   accent: '#3B82F6', // Blue accent for visibility/secondary action
-  accentLight: '#BFDBFE', 
+  accentLight: '#BFDBFE',
   danger: '#EF4444',
   border: '#E5E7EB',
   placeholder: '#9CA3AF',
@@ -64,8 +62,8 @@ const Teams = ({ id, isCreator }) => {
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const slideAnim = useRef(new Animated.Value(0)).current; 
-  const modalHeight = height * 0.7; 
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const modalHeight = height * 0.7;
 
   const fetchTeams = async (id) => {
     try {
@@ -156,7 +154,7 @@ const Teams = ({ id, isCreator }) => {
 
   const deleteTeamHandler = async (teamId) => {
     try {
-      setLoading({ key: `Delete-${teamId}`, value: true }); 
+      setLoading({ key: `Delete-${teamId}`, value: true });
       const response = await apiService({
         endpoint: `tournaments/${id}/remove-teams`,
         method: 'POST',
@@ -169,7 +167,7 @@ const Teams = ({ id, isCreator }) => {
       setError("Couldn't delete team");
     } finally {
       await fetchTeams(id);
-      setLoading({ key: '', value: false }); 
+      setLoading({ key: '', value: false });
     }
   };
 
@@ -313,12 +311,12 @@ const Teams = ({ id, isCreator }) => {
         ) : (
           <FlatList
             // 💥 FIX: Disabling internal scrolling to resolve nesting error
-            scrollEnabled={false} 
+            scrollEnabled={false}
             data={teams}
             renderItem={renderTeamItem}
             keyExtractor={(item) => item.id}
             // Removing paddingBottom here since the parent ScrollView handles overall padding
-            contentContainerStyle={styles.listContentNoScroll} 
+            contentContainerStyle={styles.listContentNoScroll}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -330,103 +328,99 @@ const Teams = ({ id, isCreator }) => {
             ListEmptyComponent={renderEmptyState}
           />
         )}
-        
+
         {/* Floating Add Button */}
         {isCreator && (teams.length > 0 || !loading.value) && (
-            <View style={styles.fixedButtonContainer}>
-                <TouchableOpacity
-                    style={styles.floatingAddButton}
-                    onPress={openModal}
-                    activeOpacity={0.85}
-                    disabled={loading.value && loading.key === 'All'}
-                >
-                    <LinearGradient
-                        colors={[AppColors.primary, AppColors.primaryDark]}
-                        style={styles.gradientButton}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                    >
-                        <Icon name="add" size={28} color="#FFF" />
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+          <View style={styles.fixedButtonContainer}>
+            <TouchableOpacity
+              style={styles.floatingAddButton}
+              onPress={openModal}
+              activeOpacity={0.85}
+              disabled={loading.value && loading.key === 'All'}
+            >
+              <LinearGradient
+                colors={[AppColors.primary, AppColors.primaryDark]}
+                style={styles.gradientButton}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Icon name="add" size={28} color="#FFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Modal for Adding Teams */}
-        <Modal visible={modalVisible} transparent animationType="none" onRequestClose={closeModal}>
-          <TouchableWithoutFeedback onPress={closeModal}>
-            <View style={styles.modalOverlay} />
-          </TouchableWithoutFeedback>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          >
-            {/* Modal Content - Animate from top */}
-            <Animated.View style={[
-              styles.modalContent, 
-              { transform: [{ translateY: slideAnim }] }
-            ]}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Add Teams</Text>
-                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                  <Icon name="close" size={24} color={AppColors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.searchContainer}>
-                <AntDesign
-                  name="search1"
-                  size={20}
-                  color={AppColors.primary}
-                  style={styles.searchIcon}
-                />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search team by name..."
-                  placeholderTextColor={AppColors.placeholder}
-                  value={enteredTeamName}
-                  onChangeText={handleInputChange}
-                  autoFocus={true}
-                  returnKeyType="search"
-                />
-                {loading.value && loading.key === 'Search' && (
-                  <ActivityIndicator size="small" color={AppColors.primary} />
-                )}
-              </View>
-              <View style={styles.dropdownContainer}>
-                {loading.value && loading.key === 'Search' ? (
-                  <View style={styles.modalLoader}>
-                    <ActivityIndicator size="large" color={AppColors.primary} />
-                    <Text style={{ color: AppColors.textSecondary, marginTop: 10 }}>Searching...</Text>
-                  </View>
-                ) : dropdownOptions.length > 0 ? (
-                  <FlatList
-                    data={dropdownOptions}
-                    renderItem={renderSearchItem}
-                    keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-                    contentContainerStyle={styles.dropdownContent}
-                    keyboardShouldPersistTaps="handled"
-                  />
-                ) : enteredTeamName.length > 2 ? (
-                  <View style={styles.noResults}>
-                    <Text style={styles.noResultsTitle}>No Teams Found 😥</Text>
-                    <Text style={styles.noResultsText}>
-                      Try refining your search query.
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.noResults}>
-                    <Icon name="search" size={40} color={AppColors.placeholder} />
-                    <Text style={styles.noResultsText}>
-                      Start typing a team name to search and add.
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </Modal>
       </View>
+      <Modal visible={modalVisible} transparent animationType="none" onRequestClose={closeModal}>
+        <View
+          style={styles.keyboardAvoidingView}
+        >
+          <Animated.View
+            style={[
+              styles.modalContent,
+              { transform: [{ translateY: slideAnim }] } // can animate differently per platform
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Teams</Text>
+              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                <Icon name="close" size={24} color={AppColors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.searchContainer}>
+              <AntDesign
+                name="search"
+                size={20}
+                color={AppColors.primary}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search team by name..."
+                placeholderTextColor={AppColors.placeholder}
+                value={enteredTeamName}
+                onChangeText={handleInputChange}
+                autoFocus={true}
+                returnKeyType="search"
+              />
+              {loading.value && loading.key === 'Search' && (
+                <ActivityIndicator size="small" color={AppColors.primary} />
+              )}
+            </View>
+            <View style={styles.dropdownContainer}>
+              {loading.value && loading.key === 'Search' ? (
+                <View style={styles.modalLoader}>
+                  <ActivityIndicator size="large" color={AppColors.primary} />
+                  <Text style={{ color: AppColors.textSecondary, marginTop: 10 }}>Searching...</Text>
+                </View>
+              ) : dropdownOptions.length > 0 ? (
+                <FlatList
+                  data={dropdownOptions}
+                  renderItem={renderSearchItem}
+                  keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+                  contentContainerStyle={styles.dropdownContent}
+                  keyboardShouldPersistTaps="handled"
+                />
+              ) : enteredTeamName.length > 2 ? (
+                <View style={styles.noResults}>
+                  <Text style={styles.noResultsTitle}>No Teams Found 😥</Text>
+                  <Text style={styles.noResultsText}>
+                    Try refining your search query.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.noResults}>
+                  <Icon name="search" size={40} color={AppColors.placeholder} />
+                  <Text style={styles.noResultsText}>
+                    Start typing a team name to search and add.
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -529,7 +523,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: 12,
-    paddingBottom: 80, 
+    paddingBottom: 80,
     paddingHorizontal: 16,
   },
   teamCard: {
@@ -604,14 +598,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
   keyboardAvoidingView: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
     flex: 1,
-    justifyContent: 'flex-end',
-    position: 'absolute', 
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start', // bottom on iOS, top on Android
     width: '100%',
     height: '100%',
   },
@@ -619,8 +609,6 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface,
     width: '100%',
     padding: 24,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     minHeight: height * 0.5,
     maxHeight: height * 0.8,
     shadowColor: AppColors.text,
@@ -628,6 +616,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 15,
+
+    // platform-specific radii
+    ...(Platform.OS === 'ios'
+      ? {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+      }
+      : {
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+      }),
   },
   modalHeader: {
     flexDirection: 'row',
@@ -646,20 +645,20 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: AppColors.surface, 
+    backgroundColor: AppColors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 14 : 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: AppColors.primary, 
+    borderColor: AppColors.primary,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     color: AppColors.text,
     marginLeft: 12,
-    padding: 0, 
+    padding: 0,
   },
   searchIcon: {
     marginRight: 0,

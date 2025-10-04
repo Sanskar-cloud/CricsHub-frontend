@@ -26,13 +26,13 @@ import TeamsComponent from "./TournamentTeams";
 // Assuming AppGradients is available here
 
 const { width, height } = Dimensions.get("window");
-const HEADER_MAX_HEIGHT = 120; 
-const HEADER_MIN_HEIGHT = 60; 
+const HEADER_MAX_HEIGHT = 120;
+const HEADER_MIN_HEIGHT = 60;
 const TAB_BAR_HEIGHT = 60;
 const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
 
 // Calculate the effective minimum height including status bar
-const EFFECTIVE_HEADER_MIN_HEIGHT = HEADER_MIN_HEIGHT + STATUS_BAR_HEIGHT; 
+const EFFECTIVE_HEADER_MIN_HEIGHT = HEADER_MIN_HEIGHT + STATUS_BAR_HEIGHT;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 const effectiveHeaderScrollDistance = (HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT) - EFFECTIVE_HEADER_MIN_HEIGHT;
 
@@ -90,7 +90,7 @@ export default function ManageTournaments({
     outputRange: [HEADER_MAX_HEIGHT + STATUS_BAR_HEIGHT, EFFECTIVE_HEADER_MIN_HEIGHT],
     extrapolate: "clamp",
   });
-  
+
   const fetchTournamentDetails = async (tournamentId: string) => {
     try {
       setLoading(true);
@@ -191,7 +191,7 @@ export default function ManageTournaments({
         colors={["#34B8FF", "#192f6a"]}
         style={styles.gradientOverlay}
       >
-        <View style={{ flex: 1 }}> 
+        <View style={{ flex: 1 }}>
           {/* Simplified Header Area */}
           <Animated.View style={[styles.headerArea, { height: headerHeight }]}>
             <Animated.View
@@ -319,7 +319,7 @@ export default function ManageTournaments({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa"
+    // backgroundColor: "#f8f9fa"
   },
 
   gradientOverlay: {
@@ -346,10 +346,10 @@ const styles = StyleSheet.create({
   headerContentWrapper: {
     width: "100%",
     paddingHorizontal: 10,
-    justifyContent: "flex-start", 
+    justifyContent: "flex-start",
     alignItems: "center",
     flex: 1,
-    paddingTop: 10, 
+    paddingTop: 10,
   },
 
   backButton: {
@@ -359,15 +359,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 20,
     padding: 8,
-    top: STATUS_BAR_HEIGHT + 10, 
+    top: STATUS_BAR_HEIGHT + 10,
   },
 
   tournamentDetailsTextContainer: {
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    paddingTop: 10, 
-    paddingHorizontal: 50, 
+    paddingTop: 10,
+    paddingHorizontal: 50,
   },
 
   tournamentNameHeader: {
@@ -375,14 +375,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
-    marginBottom: 4 
+    marginBottom: 4
   },
 
   tournamentSubDetail: {
     fontSize: 14,
     color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    marginBottom: 0, 
+    marginBottom: 0,
     fontWeight: "500",
   },
 
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: EFFECTIVE_HEADER_MIN_HEIGHT, 
+    height: EFFECTIVE_HEADER_MIN_HEIGHT,
     backgroundColor: "#34B8FF",
     flexDirection: "row",
     justifyContent: "center",
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     flex: 1,
     textAlign: 'center',
-    paddingHorizontal: 50, 
+    paddingHorizontal: 50,
   },
 
   toggleContainer: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     zIndex: 9,
-    overflow: 'hidden', 
+    overflow: 'hidden',
   },
 
   toggleScrollViewContent: {
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
     minWidth: 100,
-    height: 40, 
+    height: 40,
   },
 
   activeToggleButton: {

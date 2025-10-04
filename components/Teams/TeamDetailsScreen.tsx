@@ -1,31 +1,31 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
+import LottieView from 'lottie-react-native';
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  Image,
-  Modal,
   ActivityIndicator, // Added this core RN component import
   Animated,
-  TouchableWithoutFeedback,
-  RefreshControl,
   Dimensions,
-  Platform,
+  FlatList,
+  Image,
   KeyboardAvoidingView,
-  SafeAreaView,
+  Modal,
+  Platform,
+  RefreshControl,
   StatusBar as RNStatusBar,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import LottieView from 'lottie-react-native';
+import { SvgUri } from 'react-native-svg';
 import apiService from "../APIservices";
 import CustomDialog from "../Customs/CustomDialog.js";
-import { SvgUri } from 'react-native-svg';
-import { StatusBar } from "expo-status-bar";
 // import { AppGradients, AppColors } from "../../assets/constants/colors.js";
 
 const AppColors = {
@@ -349,7 +349,7 @@ const TeamDetailsScreen = ({ route, navigation }) => {
         {addingPlayerId === item.id ? (
           <ActivityIndicator size="small" color="#34B8FF" />
         ) : (
-          <AntDesign name="pluscircleo" size={20} color="#34B8FF" />
+          <AntDesign name="plus" size={20} color="#34B8FF" />
         )}
       </TouchableOpacity>
     );
@@ -414,7 +414,7 @@ const TeamDetailsScreen = ({ route, navigation }) => {
             <View style={styles.modalOverlay}>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1, justifyContent: 'flex-end' }}
+                style={styles.modelContainer}
               >
                 <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
                   <View style={styles.searchContainer}>
@@ -425,7 +425,7 @@ const TeamDetailsScreen = ({ route, navigation }) => {
                       value={searchQuery}
                       onChangeText={handleInputChange}
                     />
-                    <AntDesign name="search1" size={20} color="#005a7f" style={styles.searchIcon} />
+                    <AntDesign name="search" size={20} color="#005a7f" style={styles.searchIcon} />
                   </View>
 
                   {loading ? (
@@ -622,15 +622,29 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start', // bottom for iOS, top for Android
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
+
+  modelContainer: {
+    flex: 1,
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start',
+  },
+
   modalContent: {
     backgroundColor: AppColors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     padding: 20,
     maxHeight: '70%',
+
+    ...(Platform.OS === 'ios'
+      ? {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+      }
+      : {
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+      }),
   },
   searchContainer: {
     flexDirection: 'row',

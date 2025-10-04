@@ -792,24 +792,31 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-start',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Ensure modal overlay has background
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start', // bottom for iOS, top for Android
+    backgroundColor: AppColors.overlay,
   },
   teamModalContentContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start',
   },
   teamModalContent: {
     backgroundColor: AppColors.white,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
     padding: 25,
-    maxHeight: '80%',
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 10,
+    // Platform specific border radii
+    ...(Platform.OS === 'ios'
+      ? {
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+      }
+      : {
+        borderBottomLeftRadius: 25,
+        borderBottomRightRadius: 25,
+      }),
   },
   modalTitle: {
     fontSize: 22,

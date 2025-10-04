@@ -26,7 +26,7 @@ import {
 import * as Animatable from 'react-native-animatable';
 import apiService from '../APIservices';
 
-const { height } = Dimensions.get('window'); 
+const { height } = Dimensions.get('window');
 
 // 🚨 UX CONSTANTS
 const AppColors = {
@@ -62,7 +62,7 @@ const AddPlayersToTeam = () => {
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
-  const footerTranslateY = useState(new Animated.Value(0))[0]; 
+  const footerTranslateY = useState(new Animated.Value(0))[0];
 
   // --- Animation & Keyboard Listeners ---
   useEffect(() => {
@@ -85,7 +85,7 @@ const AddPlayersToTeam = () => {
       setKeyboardOpen(true);
       // Move the footer up by keyboard height
       Animated.timing(footerTranslateY, {
-        toValue: -e.endCoordinates.height + (Platform.OS === 'ios' ? 0 : 20), 
+        toValue: -e.endCoordinates.height + (Platform.OS === 'ios' ? 0 : 20),
         duration: 250,
         useNativeDriver: true,
       }).start();
@@ -115,7 +115,7 @@ const AddPlayersToTeam = () => {
       } else {
         setFilteredPlayers([]);
       }
-    }, 400); 
+    }, 400);
     return () => clearTimeout(debounceSearch);
   }, [searchQuery]);
 
@@ -133,20 +133,20 @@ const AddPlayersToTeam = () => {
       ]);
       const nameData = nameRes.success ? nameRes.data.data || [] : [];
       const phoneData = phoneRes.success ? phoneRes.data.data || [] : [];
-      
+
       // Combine and filter duplicates by ID
       const allPlayersMap = new Map();
       [...nameData, ...phoneData].forEach(player => {
-          if (!allPlayersMap.has(player.id)) {
-              allPlayersMap.set(player.id, player);
-          }
+        if (!allPlayersMap.has(player.id)) {
+          allPlayersMap.set(player.id, player);
+        }
       });
-      
+
       setFilteredPlayers(Array.from(allPlayersMap.values()));
 
     } catch (e) {
-        setErrorMessage('Failed to fetch players. Network error.');
-        setFilteredPlayers([]);
+      setErrorMessage('Failed to fetch players. Network error.');
+      setFilteredPlayers([]);
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ const AddPlayersToTeam = () => {
 
     setCreatingTeam(true);
     setErrorMessage('');
-    
+
     // --- Error Message Variable ---
     let backendErrorMessage = 'An unexpected error occurred during team creation.';
 
@@ -201,7 +201,7 @@ const AddPlayersToTeam = () => {
       formData.append('name', teamName);
       formData.append('captainId', captainId);
       formData.append('playerIds', playerId.join(','));
-      
+
       // Handle Logo upload
       if (logoUri) {
         const fileName = logoUri.split('/').pop();
@@ -209,11 +209,11 @@ const AddPlayersToTeam = () => {
         formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
       }
 
-      const response = await apiService({ 
-          endpoint: `teams/${userId}`, 
-          method: 'POST', 
-          body: formData, 
-          isMultipart: true 
+      const response = await apiService({
+        endpoint: `teams/${userId}`,
+        method: 'POST',
+        body: formData,
+        isMultipart: true
       });
 
       if (response.success) {
@@ -224,15 +224,15 @@ const AddPlayersToTeam = () => {
       } else {
         // Use the specific backend error message from the response
         backendErrorMessage = response.error?.message || 'Failed to create team. No specific message provided.';
-        
+
         // Show the alert and set the sticky error message
         Alert.alert('Error', backendErrorMessage);
         setErrorMessage(backendErrorMessage);
       }
     } catch (e) {
-        // If a network/catch error occurs, use the generic message
-        Alert.alert('Error', backendErrorMessage);
-        setErrorMessage(backendErrorMessage);
+      // If a network/catch error occurs, use the generic message
+      Alert.alert('Error', backendErrorMessage);
+      setErrorMessage(backendErrorMessage);
 
     } finally {
       setCreatingTeam(false);
@@ -280,8 +280,8 @@ const AddPlayersToTeam = () => {
         </View>
       </View>
       <View style={styles.cardActions}>
-        <TouchableOpacity 
-          style={[styles.captainButton, captainId === item.id && styles.activeCaptainButton]} 
+        <TouchableOpacity
+          style={[styles.captainButton, captainId === item.id && styles.activeCaptainButton]}
           onPress={() => makeCaptain(item.id)}
           disabled={captainId === item.id}
         >
@@ -296,9 +296,9 @@ const AddPlayersToTeam = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-        <Ionicons name="people-outline" size={60} color={AppColors.placeholderGray} /> 
-        <Text style={styles.emptyStateText}>Start by searching and adding players above.</Text>
-        <Text style={styles.emptyStateSubText}>Your selected players will appear here.</Text>
+      <Ionicons name="people-outline" size={60} color={AppColors.placeholderGray} />
+      <Text style={styles.emptyStateText}>Start by searching and adding players above.</Text>
+      <Text style={styles.emptyStateSubText}>Your selected players will appear here.</Text>
     </View>
   );
 
@@ -308,7 +308,7 @@ const AddPlayersToTeam = () => {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -height * 0.5} 
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -height * 0.5}
       >
         <Animated.View style={[styles.contentContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
@@ -347,7 +347,7 @@ const AddPlayersToTeam = () => {
                 <ScrollView
                   keyboardShouldPersistTaps="handled"
                   nestedScrollEnabled={true}
-                  style={{ maxHeight: 250 }} 
+                  style={{ maxHeight: 250 }}
                 >
                   {filteredPlayers.map((player) => (
                     <View key={player.id}>{renderPlayerItem({ item: player })}</View>
@@ -355,12 +355,12 @@ const AddPlayersToTeam = () => {
                 </ScrollView>
               </View>
             )}
-            
+
             {/* Search Loader */}
             {loading && searchQuery.length > 0 && (
-                <View style={styles.searchLoading}>
-                    <ActivityIndicator size="small" color={AppColors.primary} />
-                </View>
+              <View style={styles.searchLoading}>
+                <ActivityIndicator size="small" color={AppColors.primary} />
+              </View>
             )}
           </View>
 
@@ -382,7 +382,7 @@ const AddPlayersToTeam = () => {
       </KeyboardAvoidingView>
 
       {/* Footer (Sticky & Keyboard-Aware) */}
-      <Animated.View 
+      <Animated.View
         style={[styles.footer, { transform: [{ translateY: footerTranslateY }] }]}
       >
         {errorMessage !== '' && <Text style={styles.errorMessage}>{errorMessage}</Text>}
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
   header: {
     flexDirection: 'row',
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.lightBackground, 
+    borderBottomColor: AppColors.lightBackground,
     backgroundColor: AppColors.cardBackground,
   },
   dropdownLeft: {
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.cardBackground,
   },
   activeCaptainButton: {
-    backgroundColor: AppColors.warning + '30', 
+    backgroundColor: AppColors.warning + '30',
     borderColor: AppColors.warning,
   },
   deleteButton: {
@@ -641,15 +641,11 @@ const styles = StyleSheet.create({
   },
   // Footer
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
     backgroundColor: AppColors.cardBackground,
-    zIndex: 20, 
+    zIndex: 20,
   },
   createButton: {
     padding: 18,

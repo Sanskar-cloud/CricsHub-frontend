@@ -228,11 +228,11 @@ const InstantMatch = () => {
 
       <SafeAreaView style={styles.container}>
         {/* PRIMARY KEYBOARD AVOIDING VIEW FOR MAIN SCREEN INPUTS */}
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={styles.instantMatchContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           // Adjust this offset if needed to clear header/status bar on Android
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <View style={styles.contentWrapper}>
             <Text style={styles.title}>Set Up Your Match</Text>
@@ -351,7 +351,7 @@ const InstantMatch = () => {
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.teamModalContentContainer}
-              // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -200} // Removed unnecessary offset here
+            // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -200} // Removed unnecessary offset here
             >
               <Animated.View style={[styles.teamModalContent, { transform: [{ translateY: slideAnim }] }]}>
                 <Text style={styles.modalTitle}>Select Team</Text>
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     paddingHorizontal: 20,
     // Ensure content can flex up/down
-    flexGrow: 1, 
+    flexGrow: 1,
     justifyContent: 'center',
   },
   title: {
@@ -575,28 +575,33 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  // --- MODAL STYLES (MODIFIED) ---
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end', // Aligns modal to the bottom
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start', // bottom for iOS, top for Android
     backgroundColor: AppColors.overlay,
   },
   teamModalContentContainer: {
     flex: 1,
-    justifyContent: 'flex-end', // Aligns Animated.View to the bottom
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start',
   },
   teamModalContent: {
     backgroundColor: AppColors.white,
-    // MODIFIED: Use top radii for bottom-aligned modal
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25, 
-    // REMOVED: maxHeight to allow KAV to size it correctly
     padding: 25,
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 10,
+    // Platform specific border radii
+    ...(Platform.OS === 'ios'
+      ? {
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+      }
+      : {
+        borderBottomLeftRadius: 25,
+        borderBottomRightRadius: 25,
+      }),
   },
   modalTitle: {
     fontSize: 22,
