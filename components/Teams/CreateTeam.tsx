@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import {
   Alert,
   Image,
-  KeyboardAvoidingView, // <-- Added KeyboardAvoidingView
+  KeyboardAvoidingView,
   Platform,
   StatusBar as RNStatusBar,
   SafeAreaView,
@@ -27,7 +27,6 @@ const AppColors = {
   error: "#E74C3C",
   darkText: "#000000",
   lightBackground: "#F8F9FA",
-  // Primary color used in the gradient
   primaryGradientStart: '#4A90E2',
   primaryGradientEnd: '#6BB9F0',
 };
@@ -84,7 +83,6 @@ const CreateTeam = () => {
         <View style={styles.headerButton} />
       </View>
 
-      {/* 💥 FIX: KeyboardAvoidingView wraps the content */}
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -136,7 +134,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
   },
-  // Container now manages keyboard avoidance, using flex: 1
   container: {
     flex: 1,
     backgroundColor: AppColors.lightBackground,

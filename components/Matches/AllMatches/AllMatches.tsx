@@ -253,14 +253,11 @@ const AllMatches = () => {
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.headerContentRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-          >
-            <Icon name="arrow-back" size={28} color={AppColors.white} />
-          </TouchableOpacity>
+          {/* Back button is removed as requested */}
+          
+          <Text style={styles.headerTitle}>All Matches</Text>
 
+          {/* Search Bar (commented out in your original code) */}
           {/* <View style={styles.searchBarContainer}>
             <Icon name="search" size={20} color={AppColors.white} style={styles.searchIcon} />
             <TextInput
@@ -702,7 +699,7 @@ const PastMatch = ({ searchQuery }) => {
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState(null);
   const navigation = useAppNavigation();
 
   useEffect(() => {
@@ -836,6 +833,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     marginBottom: 10,
+    justifyContent: 'center', // Centers the title horizontally
+  },
+  headerTitle: { // New style for the title
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: AppColors.white,
+    textAlign: 'center',
+    flex: 1, // Allows the title to take up the full space
   },
   backButton: {
     marginRight: 15,

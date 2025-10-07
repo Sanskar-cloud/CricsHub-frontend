@@ -210,7 +210,7 @@ const AddPlayersToTeam = () => {
       }
 
       const response = await apiService({
-        endpoint: `teams/${userId}`,
+        endpoint: `teams`,
         method: 'POST',
         body: formData,
         isMultipart: true

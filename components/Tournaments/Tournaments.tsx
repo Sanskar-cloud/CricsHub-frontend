@@ -11,21 +11,44 @@ import {
   Platform,
   Pressable,
   StatusBar as RNStatusBar,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { AppColors, AppGradients } from '../../assets/constants/colors.js';
 import apiService from '../APIservices';
 import { useAppNavigation } from '../NavigationService';
 
 const { width } = Dimensions.get('window');
+const AppColors = {
+  primaryBlue: '#34B8FF',
+  secondaryBlue: '#1E88E5',
+  white: '#FFFFFF',
+  black: '#000000',
+  darkText: '#333333',
+  mediumText: '#555555',
+  lightText: '#888888',
+  lightBackground: '#F8F9FA',
+  cardBackground: '#FFFFFF',
+  errorRed: '#FF4757',
+  successGreen: '#2ED573',
+  liveGreen: '#2ED573',
+  upcomingOrange: '#FF9F43',
+  pastGray: '#747D8C',
+  infoGrey: '#A4B0BE',
+  cardBorder: '#E0E0E0',
+};
+
+const AppGradients = {
+  // This gradient is the key to the header color matching
+  primaryCard: ['#34B8FF', '#1E88E5'],
+  primaryButton: ['#34B8FF', '#1E88E5'],
+  shimmer: ['#F0F0F0', '#E0E0E0', '#F0F0F0'],
+};
+
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
@@ -418,47 +441,25 @@ const Tournaments = () => {
     fetchTournaments('MY');
   }, [fetchTournaments]);
 
-  const onSearchTextChange = (text) => {
-    setSearchQuery(text);
-    filterTournaments(text);
-  };
-
   useEffect(() => {
     RNStatusBar.setBarStyle('light-content');
     if (Platform.OS === 'android') {
-      RNStatusBar.setTranslucent(true);
-      RNStatusBar.setBackgroundColor('transparent');
+        RNStatusBar.setTranslucent(true);
+        RNStatusBar.setBackgroundColor('transparent'); 
     }
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <RNStatusBar />
       <LinearGradient
-        colors={AppGradients.primaryCard}
+        colors={AppGradients.primaryCard} 
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <View style={styles.headerContentRow}>
-          {/* <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-          >
-            <Icon name="arrow-back" size={28} color={AppColors.white} />
-          </TouchableOpacity> */}
-
-          <View style={styles.searchBarContainer}>
-            <Icon name="search" size={20} color={AppColors.white} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search tournaments..."
-              placeholderTextColor="rgba(255,255,255,0.8)"
-              onChangeText={onSearchTextChange}
-              value={searchQuery}
-              returnKeyType="search"
-            />
-          </View>
+          <Text style={styles.headerTitle}>Tournaments</Text>
         </View>
 
         <ScrollView
@@ -475,7 +476,7 @@ const Tournaments = () => {
               ]}
               onPress={() => {
                 setActiveTab(tab);
-                setSearchQuery('');
+                setSearchQuery(''); 
                 fetchTournaments(tab.toUpperCase());
               }}
             >
@@ -512,19 +513,12 @@ const Tournaments = () => {
                 <Text style={styles.emptyText}>
                   {activeTab === 'MY'
                     ? <Text>You haven't joined any tournaments yet.</Text>
-                    : searchQuery
-                      ? <Text>No results found for "<Text style={{ fontWeight: 'bold' }}>{searchQuery}</Text>" in <Text style={{ textTransform: 'lowercase' }}>{activeTab}</Text> tournaments.</Text>
-                      : <Text>No <Text style={{ textTransform: 'lowercase' }}>{activeTab}</Text> tournaments available.</Text>
+                    : <Text>No <Text style={{ textTransform: 'lowercase' }}>{activeTab}</Text> tournaments available.</Text>
                   }
                 </Text>
                 {activeTab === 'MY' && (
                   <TouchableOpacity style={styles.exploreButton} onPress={() => setActiveTab('LIVE')}>
                     <Text style={styles.exploreButtonText}>EXPLORE TOURNAMENTS</Text>
-                  </TouchableOpacity>
-                )}
-                {searchQuery && (
-                  <TouchableOpacity style={styles.clearSearchButton} onPress={() => setSearchQuery('')}>
-                    <Text style={styles.clearSearchButtonText}>CLEAR SEARCH</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -548,7 +542,7 @@ const Tournaments = () => {
           </ScrollView>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -559,7 +553,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingBottom: 20,
-    paddingTop: Platform.OS === 'ios' ? 10 : RNStatusBar.currentHeight + 10,
+    // This value ensures content starts below the iOS notch/Android status bar
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
     overflow: 'hidden',
@@ -568,29 +563,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 5,
-    marginBottom: 10,
+    paddingVertical: 10,
+    justifyContent: 'center',
   },
-  backButton: {
-    marginRight: 15,
-    padding: 8,
-  },
-  searchBarContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 25,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
-    paddingHorizontal: 15,
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: AppColors.white,
-    fontSize: 16,
+    textAlign: 'center',
+    flex: 1,
   },
   tabContainer: {
     paddingHorizontal: 15,
@@ -621,17 +602,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  // No longer needed since we are using shimmer effect
-  // loaderContainer: {
-  //   flex: 1,
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   backgroundColor: AppColors.lightBackground,
-  // },
-  // lottieLoader: {
-  //   width: 150,
-  //   height: 150,
-  // },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -673,19 +643,7 @@ const styles = StyleSheet.create({
     color: AppColors.white,
     fontWeight: 'bold',
   },
-  clearSearchButton: {
-    backgroundColor: AppColors.gray,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginTop: 10,
-  },
-  clearSearchButtonText: {
-    color: AppColors.white,
-    fontWeight: 'bold',
-  },
-
-  // === Common Card Styles (Refined) ===
+  // Card styles (unchanged)
   cardContainer: {
     backgroundColor: AppColors.white,
     borderRadius: 15,
