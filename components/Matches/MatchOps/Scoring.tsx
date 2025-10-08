@@ -1,4 +1,3 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { Client, IMessage } from '@stomp/stompjs';
@@ -43,6 +42,7 @@ const ScoringScreen = ({ route, navigation }) => {
   const [wicketType, setWicketType] = useState('');
   const [modals, setModals] = useState({
     bye: false,
+    legBye: false,
     wide: false,
     wicket: false,
     nextBatsman: false,
@@ -308,6 +308,7 @@ const ScoringScreen = ({ route, navigation }) => {
                     setSecondInningsStartInfoModal(false);
                     setModals({
                       bye: false,
+                      legBye: false,
                       wide: false,
                       wicket: false,
                       nextBatsman: false,
@@ -381,6 +382,7 @@ const ScoringScreen = ({ route, navigation }) => {
     newBowlerSelectionRef.current = false;
     setModals({
       bye: false,
+      legBye: false,
       catch: false,
       fielderSelect: false,
       nextBatsman: false,
@@ -542,7 +544,8 @@ const ScoringScreen = ({ route, navigation }) => {
     } else if (value === 'Bye') {
       setModals({ ...modals, bye: true });
     } else if (value === 'Leg Bye') {
-      handleSubmit({ runs: parseInt(byeExtra || '0'), legBye: true });
+      // handleSubmit({ runs: parseInt(byeExtra || '0'), legBye: true });
+      setModals({ ...modals, legBye: true });
     } else if (value === 'No Ball') {
       setModals({ ...modals, noBall: true });
     } else if (value === 'Wicket') {
@@ -806,9 +809,9 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={shotModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable onPress={() => setShotModalVisible(false)}>
+            {/* <Pressable onPress={() => setShotModalVisible(false)}>
               <MaterialIcons name='cancel' color='black' size={20} style={{ textAlign: 'right' }} />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Select Shot Type</Text>
             <FlatList
               data={cricketShots}
@@ -841,7 +844,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={directionModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setDirectionModalVisible(false)}
             >
               <MaterialIcons
@@ -850,7 +853,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Select Shot Direction</Text>
             <View style={styles.wagonWheelContainer}>
               <View style={styles.circleBackground} />
@@ -873,19 +876,19 @@ const ScoringScreen = ({ route, navigation }) => {
                 );
               })}
             </View>
-            <Pressable
+            {/* <Pressable
               style={styles.cancelButton}
               onPress={() => setDirectionModalVisible(false)}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
+            </Pressable> */}
           </View>
         </View>
       </Modal>
       <Modal visible={modals.wide} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, wide: false })}
             >
               <MaterialIcons
@@ -894,7 +897,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text>Wide Runs:</Text>
             <TextInput
               style={styles.input}
@@ -920,7 +923,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.noBall} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, noBall: false })}
             >
               <MaterialIcons
@@ -929,7 +932,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text>No ball runs:</Text>
             <TextInput
               style={styles.input}
@@ -950,20 +953,11 @@ const ScoringScreen = ({ route, navigation }) => {
           </View>
         </View>
       </Modal>
+      {/* Bye Modal */}
       <Modal visible={modals.bye} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
-              onPress={() => setModals({ ...modals, bye: false })}
-            >
-              <MaterialIcons
-                name='cancel'
-                color='black'
-                size={20}
-                style={{ textAlign: 'right' }}
-              />
-            </Pressable>
-            <Text>Bye/Leg Bye Runs:</Text>
+            <Text>Bye Runs:</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -982,10 +976,35 @@ const ScoringScreen = ({ route, navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Leg Bye Modal */}
+      <Modal visible={modals.legBye} transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Leg Bye Runs:</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={byeExtra}
+              onChangeText={setByeExtra}
+            />
+            <Pressable
+              style={styles.submitButton}
+              onPress={() => {
+                setModals({ ...modals, legBye: false });
+                handleSubmit({ runs: parseInt(byeExtra || '0'), legBye: true });
+              }}
+            >
+              <Text style={styles.submitText}>Submit</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={modals.wicket} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, wicket: false })}
             >
               <MaterialIcons
@@ -994,7 +1013,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text>Select Wicket Type:</Text>
 
             <Picker
@@ -1033,7 +1052,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.nextBatsman && canSelectBatsman} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, nextBatsman: false })}
             >
               <MaterialIcons
@@ -1042,7 +1061,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Select Next Batsman</Text>
 
             <Picker
@@ -1081,7 +1100,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={newBowlerSelectionRef.current} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               // onPress={() => setModals({ ...modals, nextBowler: false })}
               onPress={() => newBowlerSelectionRef.current = false}
             >
@@ -1091,7 +1110,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Select Next Bowler</Text>
 
             <Picker
@@ -1128,7 +1147,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.catch} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, catch: false })}
             >
               <MaterialIcons
@@ -1137,7 +1156,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Select Catcher</Text>
 
             <Picker
@@ -1175,7 +1194,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.runout} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, runout: false })}
             >
               <MaterialIcons
@@ -1184,7 +1203,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Who got run out?</Text>
             <Pressable
               style={styles.submitButton}
@@ -1213,7 +1232,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.fielderSelect} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, fielderSelect: false })}
             >
               <MaterialIcons
@@ -1222,7 +1241,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
 
             <Text style={styles.modalTitle}>Select Fielder</Text>
             <Picker
@@ -1290,7 +1309,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.startNextInnings} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setModals({ ...modals, startNextInnings: false })}
             >
               <MaterialIcons
@@ -1299,7 +1318,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.modalTitle}>Start second innings?</Text>
             <Pressable
               style={styles.submitButton}
@@ -1314,7 +1333,7 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={secondInningsStartInfoModal} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setSecondInningsStartInfoModal(false)}
             >
               <MaterialIcons
@@ -1323,7 +1342,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable>
+            </Pressable> */}
             <Text style={styles.infoTextHeading}>1st Innings completed</Text>
             <Text style={styles.infoText}>You can either start the second innings right away.</Text>
             <Text style={styles.infoText}>Or, later the scorer can visit the live matches under the matches tab.</Text>

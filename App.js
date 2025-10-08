@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
 import AnimatedSplash from './assets/animations/SplashScreen.js';
+import BadGatewayScreen from './components/APIservices/BadGatewayScreen.tsx';
 import Login from './components/Authentication/Login';
 import OTP from './components/Authentication/Otp';
 import RegisterForm from './components/Authentication/RegistrationForm';
@@ -157,6 +158,7 @@ const MainScreens = ({ navigation: rootNavigation }) => {
     "TournamentMatchOperatives",
     "RegisterForm",
     "Otp",
+    "BadGatewayScreen",
   ];
 
   const shouldShowFooter = !hideFooterOrSidebarScreens.includes(currentRoute);
@@ -166,19 +168,19 @@ const MainScreens = ({ navigation: rootNavigation }) => {
     <View style={{ flex: 1, marginBottom: insets.bottom }}>
       {/* 1. Stack Navigator Renders Screen Content */}
       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Home">
-        
+
         {/* Pass sidebar controls and user state only to the Home screen */}
         <Stack.Screen name="Home">
-            {(props) => (
-                <Home 
-                    {...props} 
-                    toggleSidebar={toggleSidebar} 
-                    userName={userName} 
-                    setUserName={setUserName} 
-                />
-            )}
+          {(props) => (
+            <Home
+              {...props}
+              toggleSidebar={toggleSidebar}
+              userName={userName}
+              setUserName={setUserName}
+            />
+          )}
         </Stack.Screen>
-        
+
         {/* All other screen registrations remain */}
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="MyMatches" component={AllMatches} />
@@ -218,6 +220,7 @@ const MainScreens = ({ navigation: rootNavigation }) => {
         <Stack.Screen name="TossFlip" component={TossFlip} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
         <Stack.Screen name="StreamInfoModel" component={StreamInfoModal} />
+        <Stack.Screen name="BadGatewayScreen" component={BadGatewayScreen} />
       </Stack.Navigator>
 
       {/* 2. Sidebar Overlay (Rendered above Stack) */}
@@ -231,16 +234,16 @@ const MainScreens = ({ navigation: rootNavigation }) => {
 
       {/* 3. Sidebar Component (Rendered above Stack/Overlay) */}
       <Sidebar
-          sidebarAnim={sidebarAnim}
-          userName={userName}
-          navigation={rootNavigation} // Pass the root navigator for sidebar navigation
-          closeSidebar={closeSidebar}
-          isSidebarVisible={isSidebarVisible}
+        sidebarAnim={sidebarAnim}
+        userName={userName}
+        navigation={rootNavigation} // Pass the root navigator for sidebar navigation
+        closeSidebar={closeSidebar}
+        isSidebarVisible={isSidebarVisible}
       />
-      
+
       {/* 4. Footer (Conditional rendering based on currentRoute) */}
       {shouldShowFooter && <Footer style={styles.footer} />}
-      
+
     </View>
   );
 };

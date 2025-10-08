@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import Constants from 'expo-constants';
 
@@ -37,6 +38,11 @@ const apiService = async ({
 
     return { success: true, data: response.data };
   } catch (error: any) {
+    const status = error.response?.status;
+    if (status === 502) {
+      const navigation = useNavigation();
+      navigation.navigate('BadGatewayScreen');
+    }
     return {
       success: false,
       error: error.response?.data || error.message,

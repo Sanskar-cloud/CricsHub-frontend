@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigationState } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useAppNavigation } from './NavigationService';
@@ -8,6 +9,7 @@ import { useAppNavigation } from './NavigationService';
 const Footer = () => {
   const [activeTab, setActiveTab] = useState('HOME');
   const navigation = useAppNavigation();
+  const navState = useNavigationState((state) => state);
 
   const footerTabs = [
     { key: 'MATCHES', icon: 'sports-cricket', label: 'Matches', route: 'Main', nestedRoute: 'MyMatches', iconType: 'material' },
@@ -15,6 +17,24 @@ const Footer = () => {
     { key: 'HOME', icon: 'home', label: 'Home', route: 'Main', nestedRoute: 'Home', iconType: 'fontawesome' },
     { key: 'TEAMS', icon: 'users', label: 'Teams', route: 'Main', nestedRoute: 'Teams', iconType: 'fontawesome' },
   ];
+
+  useEffect(() => {
+    if (!navState) return;
+    console.log(navState);
+
+    let currentRoute: any = navState.routes[navState.index];
+    console.log(currentRoute);
+
+    while (currentRoute.state && currentRoute.state.index != null) {
+      currentRoute = currentRoute.state.routes[currentRoute.state.index];
+    }
+
+    const currentScreen = currentRoute.name;
+    const matchedTab = footerTabs.find((tab) => tab.nestedRoute === currentScreen);
+    if (matchedTab) {
+      setActiveTab(matchedTab.key);
+    }
+  }, [navState])
 
   const animatedValues = footerTabs.map(() => new Animated.Value(1));
 
@@ -87,10 +107,10 @@ const styles = StyleSheet.create({
   footerWrapper: {
     borderRadius: 30,
     shadowColor: '#000',
-    shadowOpacity: 0.25,  
+    shadowOpacity: 0.25,
     shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,      
-    elevation: 15,        
+    shadowRadius: 12,
+    elevation: 15,
   },
   footer: {
     flexDirection: 'row',
@@ -98,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 80,
     borderRadius: 30,
-    marginHorizontal:10,
+    marginHorizontal: 10,
     backgroundColor: 'rgba(255,255,255,0.95)',
   },
   footerButton: {
@@ -123,6 +143,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-
 
 export default Footer;
