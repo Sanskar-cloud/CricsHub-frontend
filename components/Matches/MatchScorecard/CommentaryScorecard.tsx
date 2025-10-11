@@ -127,6 +127,7 @@ const CommentaryScorecard = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState('scorecard');
   const [innings, setInnings] = useState("1st");
   const [subTab, setSubTab] = useState("Batting");
+  const [scoreLeft, setScoreLeft] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const stompLiveClientRef = useRef(null);
@@ -356,6 +357,7 @@ const CommentaryScorecard = ({ route, navigation }) => {
     setBattingSecond(data?.team2BattingOrder);
     setBowlingFirst(data?.team1BowlingOrder);
     setBowlingSecond(data?.team2BowlingOrder);
+    setScoreLeft(data?.scoreLeft);
 
     setBattingFirstTeamName(data?.battingTeam?.name);
     setBattingSecondTeamName(data?.bowlingTeam?.name);
@@ -590,6 +592,8 @@ const CommentaryScorecard = ({ route, navigation }) => {
             <Text style={styles.oversText}>({battingSecondOvers} ov)</Text>
           </View>
         </View>
+
+        {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
 
         <View style={styles.divider} />
 
@@ -1069,6 +1073,14 @@ const styles = StyleSheet.create({
     color: AppColors.white,
     fontSize: 14,
     fontWeight: '700'
+  },
+  scoreLeftText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0A84FF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
   },
   divider: {
     height: 1,

@@ -82,6 +82,7 @@ const ScoringScreen = ({ route, navigation }) => {
   const [shotModalVisible, setShotModalVisible] = useState(false);
   const [secondInningsStartInfoModal, setSecondInningsStartInfoModal] = useState(false);
   const [selectedRunForShot, setSelectedRunForShot] = useState(null);
+  const [scoreLeft, setScoreLeft] = useState(null);
   const liveSocketRef = useRef(null);
   const canReconnectRef = useRef(true);
   const [enableScoreButton, setEnableScoreButton] = useState(true);
@@ -167,6 +168,7 @@ const ScoringScreen = ({ route, navigation }) => {
 
   const matchStateUpdateHandler = (data) => {
     setOverDetails((prev) => prev + " " + data?.ballString);
+    setScoreLeft(data?.scoreLeft);
     setBowler({
       id: data.currentBowler?.id,
       name: getInitials(data.currentBowler?.name),
@@ -759,6 +761,7 @@ const ScoringScreen = ({ route, navigation }) => {
               <Text style={styles.scoreText}>
                 {score}/{wicket} ({completedOvers}.{legalDeliveries})
               </Text>
+              {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
             </View>
           </View>
         </ImageBackground>
@@ -1396,6 +1399,14 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     color: 'white',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  scoreLeftText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: AppColors.primaryBlue,
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
