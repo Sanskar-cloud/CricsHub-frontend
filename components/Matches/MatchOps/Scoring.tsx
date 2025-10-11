@@ -7,7 +7,6 @@ import {
   Alert,
   FlatList,
   Image,
-  ImageBackground,
   Modal,
   Pressable,
   StyleSheet,
@@ -18,7 +17,6 @@ import {
 import SockJS from 'sockjs-client';
 import { AppColors } from '../../../assets/constants/colors';
 import apiService from '../../APIservices';
-const bg = require('../../../assets/images/cricsLogo.png');
 const driveImage = require('../../../assets/images/DriveShot.png');
 const cutImage = require('../../../assets/images/squareShot.png');
 const pullImage = require('../../../assets/images/HookShot.png');
@@ -754,7 +752,7 @@ const ScoringScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#000000', '#0A303B', '#36B0D5']} style={styles.gradient}>
-        <ImageBackground source={bg} resizeMode="cover" style={styles.background} imageStyle={styles.backgroundImage}>
+        <View style={styles.background}>
           <View style={styles.scoreCard}>
             <View style={styles.scoreContainer}>
               <Text style={styles.teamName}>{battingTeamName}</Text>
@@ -764,7 +762,7 @@ const ScoringScreen = ({ route, navigation }) => {
               {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
             </View>
           </View>
-        </ImageBackground>
+        </View>
       </LinearGradient>
 
       {/* Player Info Section */}
@@ -1373,15 +1371,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backgroundImage: {
-    resizeMode: 'cover',
-    opacity: 0.8,
-  },
+
   scoreCard: {
     flexDirection: 'column',
     justifyContent: 'flex-end',
     width: '100%',
     padding: 20,
+    flex: 1,
   },
   scoreContainer: {
     alignItems: 'center',

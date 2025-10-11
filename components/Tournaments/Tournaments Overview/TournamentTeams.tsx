@@ -7,6 +7,7 @@ import {
   FlatList,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -16,7 +17,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -25,15 +26,16 @@ import apiService from '../../APIservices';
 
 const { width, height } = Dimensions.get('window');
 
-// Enhanced Color Palette
+// Enhanced Color Palette - MODIFIED PRIMARY COLORS
 const AppColors = {
   background: '#F0F2F5',
   surface: '#FFFFFF',
   text: '#1F2937',
   textSecondary: '#6B7280',
-  primary: '#10B981', // Emerald Green for positive actions
-  primaryDark: '#047857',
-  accent: '#3B82F6', // Blue accent for visibility/secondary action
+  primary: '#0866AA',       // Blue Primary Dark for solid color use
+  primaryDark: '#6BB9F0',   // Blue Primary Light (for gradients)
+  primaryCard: ['#0866AA', '#6BB9F0'], // New Gradient colors
+  accent: '#3B82F6',        // Blue accent (secondary use)
   accentLight: '#BFDBFE',
   danger: '#EF4444',
   border: '#E5E7EB',
@@ -62,7 +64,7 @@ const Teams = ({ id, isCreator }) => {
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(height)).current;
   const modalHeight = height * 0.7;
 
   const fetchTeams = async (id) => {
@@ -177,11 +179,16 @@ const Teams = ({ id, isCreator }) => {
 
   const openModal = () => {
     setModalVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   const closeModal = () => {
     Animated.timing(slideAnim, {
-      toValue: modalHeight,
+      toValue: height,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
@@ -190,16 +197,6 @@ const Teams = ({ id, isCreator }) => {
       setEnteredTeamName('');
     });
   };
-
-  useEffect(() => {
-    if (modalVisible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [modalVisible, slideAnim]);
 
   const renderTeamItem = ({ item }) => (
     <View style={styles.teamCard}>
@@ -300,7 +297,8 @@ const Teams = ({ id, isCreator }) => {
               size={50}
               color={AppColors.danger}
             />
-            <Text style={styles.errorText}>{error}</Text>
+            {/* FIX: Ensure error string is rendered within a <Text> component */}
+            <Text style={styles.errorText}>{error}</Text> 
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => fetchTeams(id)}
@@ -339,7 +337,7 @@ const Teams = ({ id, isCreator }) => {
               disabled={loading.value && loading.key === 'All'}
             >
               <LinearGradient
-                colors={[AppColors.primary, AppColors.primaryDark]}
+                colors={AppColors.primaryCard} // MODIFIED: Use new blue gradient
                 style={styles.gradientButton}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -353,73 +351,82 @@ const Teams = ({ id, isCreator }) => {
         {/* Modal for Adding Teams */}
       </View>
       <Modal visible={modalVisible} transparent animationType="none" onRequestClose={closeModal}>
-        <View
-          style={styles.keyboardAvoidingView}
-        >
-          <Animated.View
-            style={[
-              styles.modalContent,
-              { transform: [{ translateY: slideAnim }] } // can animate differently per platform
-            ]}
+        <Pressable style={styles.modalOverlay} onPress={closeModal}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
           >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Teams</Text>
-              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                <Icon name="close" size={24} color={AppColors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.searchContainer}>
-              <AntDesign
-                name="search"
-                size={20}
-                color={AppColors.primary}
-                style={styles.searchIcon}
-              />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search team by name..."
-                placeholderTextColor={AppColors.placeholder}
-                value={enteredTeamName}
-                onChangeText={handleInputChange}
-                autoFocus={true}
-                returnKeyType="search"
-              />
-              {loading.value && loading.key === 'Search' && (
-                <ActivityIndicator size="small" color={AppColors.primary} />
-              )}
-            </View>
-            <View style={styles.dropdownContainer}>
-              {loading.value && loading.key === 'Search' ? (
-                <View style={styles.modalLoader}>
-                  <ActivityIndicator size="large" color={AppColors.primary} />
-                  <Text style={{ color: AppColors.textSecondary, marginTop: 10 }}>Searching...</Text>
+            <Pressable> {/* Inner Pressable to prevent modal close on content tap */}
+              <Animated.View
+                style={[
+                  styles.modalContent,
+                  { 
+                    transform: [{ translateY: slideAnim }],
+                    maxHeight: modalHeight,
+                  }
+                ]}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Add Teams</Text>
+                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                    <Icon name="close" size={24} color={AppColors.textSecondary} />
+                  </TouchableOpacity>
                 </View>
-              ) : dropdownOptions.length > 0 ? (
-                <FlatList
-                  data={dropdownOptions}
-                  renderItem={renderSearchItem}
-                  keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-                  contentContainerStyle={styles.dropdownContent}
-                  keyboardShouldPersistTaps="handled"
-                />
-              ) : enteredTeamName.length > 2 ? (
-                <View style={styles.noResults}>
-                  <Text style={styles.noResultsTitle}>No Teams Found 😥</Text>
-                  <Text style={styles.noResultsText}>
-                    Try refining your search query.
-                  </Text>
+                <View style={styles.searchContainer}>
+                  <AntDesign
+                    name="search"
+                    size={20}
+                    color={AppColors.primary}
+                    style={styles.searchIcon}
+                  />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search team by name..."
+                    placeholderTextColor={AppColors.placeholder}
+                    value={enteredTeamName}
+                    onChangeText={handleInputChange}
+                    autoFocus={true}
+                    returnKeyType="search"
+                  />
+                  {loading.value && loading.key === 'Search' && (
+                    <ActivityIndicator size="small" color={AppColors.primary} />
+                  )}
                 </View>
-              ) : (
-                <View style={styles.noResults}>
-                  <Icon name="search" size={40} color={AppColors.placeholder} />
-                  <Text style={styles.noResultsText}>
-                    Start typing a team name to search and add.
-                  </Text>
+                <View style={styles.dropdownContainer}>
+                  {loading.value && loading.key === 'Search' ? (
+                    <View style={styles.modalLoader}>
+                      <ActivityIndicator size="large" color={AppColors.primary} />
+                      <Text style={{ color: AppColors.textSecondary, marginTop: 10 }}>Searching...</Text>
+                    </View>
+                  ) : dropdownOptions.length > 0 ? (
+                    <FlatList
+                      data={dropdownOptions}
+                      renderItem={renderSearchItem}
+                      keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+                      contentContainerStyle={styles.dropdownContent}
+                      keyboardShouldPersistTaps="handled"
+                    />
+                  ) : enteredTeamName.length > 2 ? (
+                    <View style={styles.noResults}>
+                      <Text style={styles.noResultsTitle}>No Teams Found 😥</Text>
+                      <Text style={styles.noResultsText}>
+                        Try refining your search query.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.noResults}>
+                      <Icon name="search" size={40} color={AppColors.placeholder} />
+                      <Text style={styles.noResultsText}>
+                        Start typing a team name to search and add.
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-          </Animated.View>
-        </View>
+              </Animated.View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
@@ -455,7 +462,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: AppColors.accent,
+    backgroundColor: AppColors.primary, // MODIFIED
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -499,11 +506,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyStateAddButton: {
-    backgroundColor: AppColors.primary,
+    backgroundColor: AppColors.primary, // MODIFIED
     paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 10,
-    shadowColor: AppColors.primaryDark,
+    shadowColor: AppColors.primary, // MODIFIED
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -514,12 +521,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  // FIX: Content container style when scrolling is disabled. Needs enough padding
   listContentNoScroll: {
     paddingVertical: 12,
-    paddingBottom: 80, // Ensure enough bottom padding for the floating button
+    paddingBottom: 80,
     paddingHorizontal: 16,
-    flexGrow: 1, // Crucial for the parent ScrollView to capture the full height
+    flexGrow: 1,
   },
   listContent: {
     paddingVertical: 12,
@@ -585,7 +591,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    shadowColor: AppColors.primaryDark,
+    shadowColor: AppColors.primary, // MODIFIED
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
@@ -598,35 +604,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  keyboardAvoidingView: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modalOverlay: {
     flex: 1,
-    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'flex-start', // bottom on iOS, top on Android
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  keyboardAvoidingView: { // MODIFIED: For keyboard adjustment
+    flex: 1,
+    justifyContent: 'flex-end',
     width: '100%',
-    height: '100%',
   },
   modalContent: {
     backgroundColor: AppColors.surface,
     width: '100%',
     padding: 24,
-    minHeight: height * 0.5,
-    maxHeight: height * 0.8,
     shadowColor: AppColors.text,
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 15,
 
-    // platform-specific radii
-    ...(Platform.OS === 'ios'
-      ? {
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-      }
-      : {
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-      }),
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -651,7 +650,7 @@ const styles = StyleSheet.create({
     paddingVertical: Platform.OS === 'ios' ? 14 : 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: AppColors.primary,
+    borderColor: AppColors.primary, // MODIFIED
   },
   searchInput: {
     flex: 1,
@@ -662,7 +661,7 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     marginRight: 0,
-    color: AppColors.primary,
+    color: AppColors.primary, // MODIFIED
   },
   modalLoader: {
     minHeight: 120,

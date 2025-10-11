@@ -28,21 +28,19 @@ import apiService from '../APIservices';
 
 const { height } = Dimensions.get('window');
 
-// 🚨 UX CONSTANTS
 const AppColors = {
-  primary: '#4A90E2', // Blue
-  secondary: '#357ABD', // Darker Blue
+  primary: '#4A90E2', 
+  secondary: '#357ABD', 
   success: '#4CAF50',
-  danger: '#F44336', // Red
-  warning: '#FFC107', // Yellow/Gold
+  danger: '#F44336', 
+  warning: '#FFC107', 
   lightBackground: '#F9F9F9',
   cardBackground: '#FFFFFF',
   textDark: '#333333',
   textLight: '#777777',
-  placeholderGray: '#CCC', // Visible gray for empty states
+  placeholderGray: '#CCC',
 };
 
-// Placeholder image for player profile - Using require() for build compatibility
 const DefaultLogo = require("../../assets/defaultLogo.png");
 
 const AddPlayersToTeam = () => {
@@ -80,10 +78,8 @@ const AddPlayersToTeam = () => {
       }),
     ]).start();
 
-    // Keyboard Handlers for sticky button
     const show = Keyboard.addListener('keyboardDidShow', (e) => {
       setKeyboardOpen(true);
-      // Move the footer up by keyboard height
       Animated.timing(footerTranslateY, {
         toValue: -e.endCoordinates.height + (Platform.OS === 'ios' ? 0 : 20),
         duration: 250,
@@ -93,7 +89,6 @@ const AddPlayersToTeam = () => {
 
     const hide = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardOpen(false);
-      // Move the footer back to its original position (0)
       Animated.timing(footerTranslateY, {
         toValue: 0,
         duration: 250,
