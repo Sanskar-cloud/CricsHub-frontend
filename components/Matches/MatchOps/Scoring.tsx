@@ -14,8 +14,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SockJS from 'sockjs-client';
-import { AppColors } from '../../../assets/constants/colors';
+import { AppColors, AppGradients } from '../../../assets/constants/colors';
 import apiService from '../../APIservices';
 const driveImage = require('../../../assets/images/DriveShot.png');
 const cutImage = require('../../../assets/images/squareShot.png');
@@ -749,18 +750,32 @@ const ScoringScreen = ({ route, navigation }) => {
     setAvailableBatsmen(response.data.data);
   }
 
+  const modalCloseHandler = (modalParam: any) => {
+    if (typeof modalParam === 'function') {
+      modalParam(false);
+    } else if (typeof modalParam === 'string') {
+      setModals(prev => ({ ...prev, [modalParam]: false }));
+    } else {
+      console.warn('Invalid modalCloseHandler argument:', modalParam);
+    }
+
+    setEnableScoreButton(true);
+  };
+
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#000000', '#0A303B', '#36B0D5']} style={styles.gradient}>
-        <View style={styles.background}>
-          <View style={styles.scoreCard}>
-            <View style={styles.scoreContainer}>
-              <Text style={styles.teamName}>{battingTeamName}</Text>
-              <Text style={styles.scoreText}>
-                {score}/{wicket} ({completedOvers}.{legalDeliveries})
-              </Text>
-              {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
-            </View>
+      <LinearGradient colors={['white', AppGradients.primaryCard[1]]}
+        style={styles.background}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      >
+        <View style={styles.scoreCard}>
+          <View style={styles.scoreContainer}>
+            <Text style={styles.teamName}>{battingTeamName}</Text>
+            <Text style={styles.scoreText}>
+              {score}/{wicket} ({completedOvers}.{legalDeliveries})
+            </Text>
+            {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
           </View>
         </View>
       </LinearGradient>
@@ -810,9 +825,9 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={shotModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable onPress={() => setShotModalVisible(false)}>
+            <Pressable onPress={() => modalCloseHandler(setShotModalVisible)}>
               <MaterialIcons name='cancel' color='black' size={20} style={{ textAlign: 'right' }} />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Select Shot Type</Text>
             <FlatList
               data={cricketShots}
@@ -845,8 +860,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={directionModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setDirectionModalVisible(false)}
+            <Pressable
+              onPress={() => modalCloseHandler(setDirectionModalVisible)}
             >
               <MaterialIcons
                 name='cancel'
@@ -854,7 +869,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Select Shot Direction</Text>
             <View style={styles.wagonWheelContainer}>
               <View style={styles.circleBackground} />
@@ -877,20 +892,20 @@ const ScoringScreen = ({ route, navigation }) => {
                 );
               })}
             </View>
-            {/* <Pressable
+            <Pressable
               style={styles.cancelButton}
-              onPress={() => setDirectionModalVisible(false)}
+              onPress={() => modalCloseHandler(setDirectionModalVisible)}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable> */}
+            </Pressable>
           </View>
         </View>
       </Modal>
       <Modal visible={modals.wide} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, wide: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('wide')}
             >
               <MaterialIcons
                 name='cancel'
@@ -898,7 +913,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text>Wide Runs:</Text>
             <TextInput
               style={styles.input}
@@ -924,8 +939,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.noBall} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, noBall: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('noBall')}
             >
               <MaterialIcons
                 name='cancel'
@@ -933,7 +948,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text>No ball runs:</Text>
             <TextInput
               style={styles.input}
@@ -958,6 +973,16 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.bye} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <Pressable
+              onPress={() => modalCloseHandler('bye')}
+            >
+              <MaterialIcons
+                name='cancel'
+                color='black'
+                size={20}
+                style={{ textAlign: 'right' }}
+              />
+            </Pressable>
             <Text>Bye Runs:</Text>
             <TextInput
               style={styles.input}
@@ -982,6 +1007,16 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.legBye} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <Pressable
+              onPress={() => modalCloseHandler('legBye')}
+            >
+              <MaterialIcons
+                name='cancel'
+                color='black'
+                size={20}
+                style={{ textAlign: 'right' }}
+              />
+            </Pressable>
             <Text>Leg Bye Runs:</Text>
             <TextInput
               style={styles.input}
@@ -1005,8 +1040,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.wicket} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, wicket: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('wicket')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1014,7 +1049,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text>Select Wicket Type:</Text>
 
             <Picker
@@ -1053,8 +1088,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.nextBatsman && canSelectBatsman} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, nextBatsman: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('nextBatsman')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1062,7 +1097,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Select Next Batsman</Text>
 
             <Picker
@@ -1101,9 +1136,12 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={newBowlerSelectionRef.current} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
+            <Pressable
               // onPress={() => setModals({ ...modals, nextBowler: false })}
-              onPress={() => newBowlerSelectionRef.current = false}
+              onPress={() => {
+                newBowlerSelectionRef.current = false;
+                setEnableScoreButton(true);
+              }}
             >
               <MaterialIcons
                 name='cancel'
@@ -1111,7 +1149,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Select Next Bowler</Text>
 
             <Picker
@@ -1148,8 +1186,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.catch} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, catch: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('catch')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1157,7 +1195,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Select Catcher</Text>
 
             <Picker
@@ -1195,8 +1233,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.runout} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, runout: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('runout')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1204,7 +1242,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Who got run out?</Text>
             <Pressable
               style={styles.submitButton}
@@ -1233,8 +1271,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.fielderSelect} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, fielderSelect: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('fielderSelect')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1242,7 +1280,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
 
             <Text style={styles.modalTitle}>Select Fielder</Text>
             <Picker
@@ -1310,8 +1348,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={modals.startNextInnings} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setModals({ ...modals, startNextInnings: false })}
+            <Pressable
+              onPress={() => modalCloseHandler('startNextInnings')}
             >
               <MaterialIcons
                 name='cancel'
@@ -1319,7 +1357,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.modalTitle}>Start second innings?</Text>
             <Pressable
               style={styles.submitButton}
@@ -1334,8 +1372,8 @@ const ScoringScreen = ({ route, navigation }) => {
       <Modal visible={secondInningsStartInfoModal} transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* <Pressable
-              onPress={() => setSecondInningsStartInfoModal(false)}
+            <Pressable
+              onPress={() => modalCloseHandler(setSecondInningsStartInfoModal)}
             >
               <MaterialIcons
                 name='cancel'
@@ -1343,7 +1381,7 @@ const ScoringScreen = ({ route, navigation }) => {
                 size={20}
                 style={{ textAlign: 'right' }}
               />
-            </Pressable> */}
+            </Pressable>
             <Text style={styles.infoTextHeading}>1st Innings completed</Text>
             <Text style={styles.infoText}>You can either start the second innings right away.</Text>
             <Text style={styles.infoText}>Or, later the scorer can visit the live matches under the matches tab.</Text>
@@ -1362,9 +1400,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0',
-  },
-  gradient: {
-    flex: 1,
   },
   background: {
     flex: 1,
@@ -1402,10 +1437,12 @@ const styles = StyleSheet.create({
   scoreLeftText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: AppColors.primaryBlue,
+    color: 'white',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
+    marginVertical: 10,
+    textAlign: 'center',
   },
   playerInfoContainer: {
     backgroundColor: '#002233',

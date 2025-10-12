@@ -593,8 +593,6 @@ const CommentaryScorecard = ({ route, navigation }) => {
           </View>
         </View>
 
-        {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
-
         <View style={styles.divider} />
 
         <View style={styles.playerContainer}>
@@ -765,6 +763,7 @@ const CommentaryScorecard = ({ route, navigation }) => {
 
           <ImageBackground source={background} style={styles.background} imageStyle={styles.backgroundImage}>
             <View style={styles.stickyScorecard}>
+              {scoreLeft && <Text style={styles.scoreLeftText}>{scoreLeft}</Text>}
               {renderScorecard()}
             </View>
             <ScrollView
@@ -1075,12 +1074,14 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
   scoreLeftText: {
+    textAlign: 'center',
     fontSize: 20,
     fontWeight: 'bold',
     color: '#0A84FF',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 5,
+    marginVertical: 10,
   },
   divider: {
     height: 1,
