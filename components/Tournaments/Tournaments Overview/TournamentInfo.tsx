@@ -67,7 +67,7 @@ const Info = ({ id, isCreator }) => {
         setEditedDetails({
           name: data.name || '',
           // Ensure type is string for TextInput
-          type: String(data.type) || '', 
+          type: String(data.type) || '',
           ballType: data.ballType || '',
           venues: data.venues || [],
           format: data.format || '',
@@ -150,18 +150,18 @@ const Info = ({ id, isCreator }) => {
 
   const onDateChange = (isStart) => (event, selectedDate) => {
     if (Platform.OS === 'android') {
-        isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
+      isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
     }
 
     if (selectedDate) {
-        if (isStart) {
-            setStartDate(selectedDate);
-            if (selectedDate > endDate) {
-                setEndDate(selectedDate);
-            }
-        } else {
-            setEndDate(selectedDate);
+      if (isStart) {
+        setStartDate(selectedDate);
+        if (selectedDate > endDate) {
+          setEndDate(selectedDate);
         }
+      } else {
+        setEndDate(selectedDate);
+      }
     }
   };
 
@@ -364,7 +364,7 @@ const Info = ({ id, isCreator }) => {
                 <Icon name="close" size={24} color={AppColors.textLight} />
               </TouchableOpacity>
             </View>
-            
+
             {error && <Text style={[styles.errorText, { paddingHorizontal: 20 }]}>{error}</Text>}
 
             <ScrollView contentContainerStyle={styles.modalScrollView}>
@@ -405,7 +405,7 @@ const Info = ({ id, isCreator }) => {
                   <Icon name="calendar-today" size={20} color={AppColors.primary} />
                 </TouchableOpacity>
               </View>
-              
+
               {/* Date Pickers */}
               {showStartDatePicker && (
                 <DateTimePicker

@@ -184,6 +184,8 @@ const CreateTournament = () => {
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const [showFormatModal, setShowFormatModal] = useState(false); // 👈 New state for modal
   const [showBallTypeModal, setShowBallTypeModal] = useState(false); // 👈 New state for modal
+  const [venues, setVenues] = useState([]);
+  const [venueInput, setVenueInput] = useState('');
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [notification, setNotification] = useState({
     visible: false,
@@ -193,11 +195,16 @@ const CreateTournament = () => {
 
   const [isFormValid, setIsFormValid] = useState(false);
   useEffect(() => {
-    const isValid = tournamentName.trim() !== '' &&
+    const isValid =
+      tournamentName.trim() !== '' &&
       format !== '' &&
-      ballType !== '';
+      ballType !== '' &&
+      overs.trim() !== '' &&
+      parseInt(overs) > 0 &&
+      venues.length > 0 &&
+      startDate < endDate;
     setIsFormValid(isValid);
-  }, [tournamentName, format, ballType]);
+  }, [tournamentName, format, ballType, overs, venues, startDate, endDate]);
 
   const showNotification = (message, type = "success") => {
     setNotification({
@@ -249,8 +256,15 @@ const CreateTournament = () => {
     setLoading(true);
     const userId = await getUserUUID();
 
-    if (!tournamentName || !format || !ballType) {
-      showNotification('Please fill all required fields.', 'error');
+    if (!tournamentName.trim() || !format || !ballType || !overs.trim() || venues.length === 0) {
+      showNotification('Please fill all required fields, including overs.', 'error');
+      setLoading(false);
+      return;
+    }
+
+    const oversNum = Number(overs);
+    if (isNaN(oversNum) || oversNum <= 0) {
+      showNotification('Number of overs must be a valid number greater than 0.', 'error');
       setLoading(false);
       return;
     }
@@ -261,10 +275,16 @@ const CreateTournament = () => {
       return;
     }
 
+    if (moment(startDate).isSame(moment(endDate), 'day')) {
+      showNotification('Start date and end date cannot be the same.', 'error');
+      setLoading(false);
+      return;
+    }
+
     try {
       const tournamentData = {
         userId,
-        name: tournamentName,
+        name: tournamentName.trim(),
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
         format,
@@ -272,7 +292,7 @@ const CreateTournament = () => {
         ballType,
         matchesPerDay: "1",
         matchesPerTeam: "1",
-        venues: "Default Venue",
+        venues,
         banner,
       };
 
@@ -283,7 +303,7 @@ const CreateTournament = () => {
     } finally {
       setLoading(false);
     }
-  }, [tournamentName, startDate, endDate, format, overs, ballType, banner, getUserUUID, navigation]);
+  }, [tournamentName, startDate, endDate, format, venues, overs, ballType, banner, getUserUUID, navigation]);
 
   const pickImage = useCallback(async () => {
     const hasPermission = await ensureMediaPermission();
@@ -306,11 +326,24 @@ const CreateTournament = () => {
     }
   }, []);
 
+  const addVenue = () => {
+    if (venueInput.trim() !== '') {
+      setVenues([...venues, venueInput.trim()]);
+      setVenueInput('');
+    }
+  };
+
+  const removeVenue = (index) => {
+    const updated = [...venues];
+    updated.splice(index, 1);
+    setVenues(updated);
+  };
+
   const getFormatLabel = (value) => {
     switch (value) {
       case 'DOUBLE_ROUND_ROBIN': return 'Double Round Robin';
       case 'SINGLE_ROUND_ROBIN': return 'Single Round Robin';
-      case 'KNOCKOUT': return 'Knockout';
+      case 'CUSTOM': return 'Custom';
       default: return 'Select Tournament Format *';
     }
   };
@@ -326,7 +359,7 @@ const CreateTournament = () => {
   const formatOptions = [
     { label: "Double Round Robin", value: "DOUBLE_ROUND_ROBIN" },
     { label: "Single Round Robin", value: "SINGLE_ROUND_ROBIN" },
-    { label: "Knockout", value: "KNOCKOUT" },
+    { label: "Custom", value: "CUSTOM" },
   ];
 
   const ballTypeOptions = [
@@ -479,7 +512,7 @@ const CreateTournament = () => {
               />
             </TouchableOpacity>
 
-            <Text style={styles.label}>Number of Overs</Text>
+            <Text style={styles.label}>Number of Overs *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter number of overs per inning"
@@ -488,6 +521,35 @@ const CreateTournament = () => {
               onChangeText={setOvers}
               keyboardType="numeric"
             />
+
+            <Text style={styles.label}>Venues *</Text>
+            <View style={styles.venueInputRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Add venue name"
+                placeholderTextColor={AppColors.lightText}
+                value={venueInput}
+                onChangeText={setVenueInput}
+                returnKeyType="done"
+                onSubmitEditing={addVenue}
+              />
+              <TouchableOpacity onPress={addVenue} style={styles.addVenueButton}>
+                <MaterialCommunityIcons name="plus-circle" size={28} color={AppColors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {venues.length > 0 && (
+              <View style={styles.venueList}>
+                {venues.map((venue, index) => (
+                  <View key={index} style={styles.venueChip}>
+                    <Text style={styles.venueText}>{venue}</Text>
+                    <TouchableOpacity onPress={() => removeVenue(index)}>
+                      <MaterialCommunityIcons name="close-circle" size={18} color={AppColors.error} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={{ height: 80 }} />
@@ -745,6 +807,43 @@ const styles = StyleSheet.create({
   },
   notificationClose: {
     padding: 4,
+  },
+  venueInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  addVenueButton: {
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  venueList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    gap: 8,
+  },
+  venueChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F0FE', // soft blue background
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  venueText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 6,
+    fontWeight: '500',
   },
 });
 

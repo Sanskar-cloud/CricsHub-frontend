@@ -221,7 +221,7 @@ const ShimmerMatchCard = () => {
 };
 
 const AllMatches = () => {
-  const [activeTab, setActiveTab] = useState('MY');
+  const [activeTab, setActiveTab] = useState('LIVE');
   const [searchQuery, setSearchQuery] = useState('');
   const navigation = useAppNavigation();
 
@@ -254,7 +254,7 @@ const AllMatches = () => {
       >
         <View style={styles.headerContentRow}>
           {/* Back button is removed as requested */}
-          
+
           <Text style={styles.headerTitle}>All Matches</Text>
 
           {/* Search Bar (commented out in your original code) */}

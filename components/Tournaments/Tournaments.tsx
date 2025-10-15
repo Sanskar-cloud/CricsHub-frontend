@@ -368,7 +368,7 @@ const ShimmerTournamentCard = () => {
 };
 
 const Tournaments = () => {
-  const [activeTab, setActiveTab] = useState('LIVE');
+  const [activeTab, setActiveTab] = useState('MY');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tournaments, setTournaments] = useState([]);
@@ -444,8 +444,8 @@ const Tournaments = () => {
   useEffect(() => {
     RNStatusBar.setBarStyle('light-content');
     if (Platform.OS === 'android') {
-        RNStatusBar.setTranslucent(true);
-        RNStatusBar.setBackgroundColor('transparent'); 
+      RNStatusBar.setTranslucent(true);
+      RNStatusBar.setBackgroundColor('transparent');
     }
   }, []);
 
@@ -453,7 +453,7 @@ const Tournaments = () => {
     <View style={styles.container}>
       <RNStatusBar />
       <LinearGradient
-        colors={AppGradients.primaryCard} 
+        colors={AppGradients.primaryCard}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -476,7 +476,7 @@ const Tournaments = () => {
               ]}
               onPress={() => {
                 setActiveTab(tab);
-                setSearchQuery(''); 
+                setSearchQuery('');
                 fetchTournaments(tab.toUpperCase());
               }}
             >
@@ -490,7 +490,7 @@ const Tournaments = () => {
           ))}
         </ScrollView>
       </LinearGradient>
-      
+
       <View style={styles.content}>
         {loading ? (
           <FlatList
