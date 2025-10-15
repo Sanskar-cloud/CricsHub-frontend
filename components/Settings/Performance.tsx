@@ -1,22 +1,22 @@
-import React, { useEffect, useState, useRef } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Animated,
-  Easing,
   Dimensions,
-  SafeAreaView,
-  StatusBar,
+  Easing,
+  Image,
   Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import apiService from "../APIservices";
 
 const { width } = Dimensions.get("window");
@@ -105,11 +105,19 @@ const Performance = ({ navigation, route }) => {
           fifties: data.careerStats?.fifties || 0,
           runsScored: data.careerStats?.runsScored || 0,
           highestScore: data.careerStats?.highestScore || "N/A",
-          battingAverage: data.careerStats?.battingAverage || "N/A",
-          strikeRate: data.careerStats?.strikeRate || "N/A",
           ballsFaced: data.careerStats?.ballsFaced || 0,
-          bowlingAverage: data.careerStats?.bowlingAverage || "N/A",
-          economyRate: data.careerStats?.economyRate || "N/A",
+          battingAverage: data.careerStats?.battingAverage != null
+            ? Number(parseFloat(data.careerStats.battingAverage).toFixed(2))
+            : "N/A",
+          strikeRate: data.careerStats?.strikeRate != null
+            ? Number(parseFloat(data.careerStats.strikeRate).toFixed(2))
+            : "N/A",
+          bowlingAverage: data.careerStats?.bowlingAverage != null
+            ? Number(parseFloat(data.careerStats.bowlingAverage).toFixed(2))
+            : "N/A",
+          economyRate: data.careerStats?.economyRate != null
+            ? Number(parseFloat(data.careerStats.economyRate).toFixed(2))
+            : "N/A",
           overs: data.careerStats?.overs || 0,
           ballsBowled: data.careerStats?.ballsBowled || 0,
           bestBowlingFigures: data.careerStats?.bestBowlingFigures || "N/A",
