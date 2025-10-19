@@ -188,6 +188,7 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
   const navigation = useAppNavigation();
   const [scaleValue] = useState(new Animated.Value(1));
   const [opacityValue] = useState(new Animated.Value(0));
+  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
     (Animated.sequence([
@@ -199,6 +200,20 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
       })
     ]) as any).start();
   }, [index, opacityValue]);
+
+  useEffect(() => {
+    const checkCreator = async () => {
+      try {
+        const creatorId = tournament.creatorName?.id;
+        const userId = await AsyncStorage.getItem('userUUID');
+        setIsCreator(creatorId === userId);
+      } catch (error) {
+        console.error("Error checking creator:", error);
+        setIsCreator(false);
+      }
+    };
+    checkCreator();
+  }, [tournament]);
 
   const handlePressIn = () => {
     Animated.spring(scaleValue, {
@@ -216,22 +231,10 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
     }).start();
   };
 
-  const checkIsCreator = useCallback(async (currentTournament) => {
-    try {
-      const creatorId = currentTournament.creatorName?.id;
-      const userId = await AsyncStorage.getItem('userUUID');
-      return creatorId === userId;
-    } catch (error) {
-      console.error("Error in checkIsCreator:", error);
-      return false;
-    }
-  }, []);
-
   const manageTournamentHandler = useCallback(async (id, currentTournament) => {
-    const isCreator = await checkIsCreator(currentTournament);
     const tab = 'INFO';
     navigation.navigate('ManageTournaments', { id, isCreator, tab });
-  }, [checkIsCreator, navigation]);
+  }, [navigation, isCreator]);
 
   const deleteTournamentHandler = useCallback(async (id) => {
     Alert.alert(
@@ -294,7 +297,7 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
       >
         <View style={styles.cardHeader}>
           <Text style={styles.tournamentName} numberOfLines={1}>{tournament.name}</Text>
-          <TouchableOpacity
+          {isCreator && <TouchableOpacity
             onPress={(e) => {
               e.stopPropagation();
               deleteTournamentHandler(tournament.id);
@@ -303,7 +306,7 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Icon name="delete-outline" size={24} color={AppColors.errorRed} />
-          </TouchableOpacity>
+          </TouchableOpacity>}
         </View>
 
         <View style={styles.cardContent}>

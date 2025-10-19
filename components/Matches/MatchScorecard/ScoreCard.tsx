@@ -1,26 +1,21 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
+  Animated,
+  BackHandler,
+  Dimensions,
+  FlatList,
   ImageBackground,
   StatusBar,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  Animated,
-  FlatList,
+  View
 } from 'react-native';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import apiService from '../../APIservices';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
+import apiService from '../../APIservices';
 
 const { width } = Dimensions.get('window');
 
@@ -202,6 +197,25 @@ const ScoreCard = ({ route, navigation }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+      navigation.navigate('Home');
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.navigate('Home');
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
+
 
   useEffect(() => {
     getMatchState();
@@ -397,7 +411,7 @@ const ScoreCard = ({ route, navigation }) => {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate('Home')}
             >
               <Ionicons name="arrow-back" size={24} color={AppColors.darkBlue} />
             </TouchableOpacity>
