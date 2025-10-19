@@ -1,3 +1,7 @@
+import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import * as Crypto from 'expo-crypto';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -7,16 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
-import * as Crypto from 'expo-crypto';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import uuid from 'react-native-uuid';
 import { AppColors, AppGradients } from '../../assets/constants/colors';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const OBS_REQUEST_TIMEOUT = 5000;
 
@@ -369,20 +367,29 @@ const ConnectLiveStream = ({ route, navigation }) => {
             </LinearGradient>
 
             {!isObsConnected ? (
-              <TouchableOpacity
-                style={[styles.button, styles.connectButton, obsConnectionLoading && styles.buttonDisabled]}
-                onPress={connectToOBS}
-                disabled={obsConnectionLoading}
-              >
-                {obsConnectionLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <>
-                    <MaterialCommunityIcons name="connection" size={20} color="#fff" />
-                    <Text style={styles.buttonText}> Connect to OBS</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  style={[styles.button, styles.connectButton, obsConnectionLoading && styles.buttonDisabled]}
+                  onPress={connectToOBS}
+                  disabled={obsConnectionLoading}
+                >
+                  {obsConnectionLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="connection" size={20} color="#fff" />
+                      <Text style={styles.buttonText}> Connect to OBS</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                <View style={styles.ipHintContainer}>
+                  <MaterialIcons name="info-outline" size={16} color={AppColors.blue} />
+                  <Text style={styles.ipHintText}>
+                    To find your OBS system's IP, open Command Prompt (Windows) or Terminal (Mac/Linux) and type: ipconfig (Windows) or ifconfig (Mac/Linux). Look for the IPv4 Address.
+                  </Text>
+                </View>
+                {/* END: IP Hint Note */}
+              </>
             ) : (
               <>
                 <View style={styles.connectionStatusContainer}>
@@ -475,4 +482,23 @@ const styles = StyleSheet.create({
   scenesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   sceneButton: { backgroundColor: '#2196F3', padding: 12, borderRadius: 10, marginRight: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: '500', marginLeft: 6 },
+  // NEW STYLE FOR IP HINT
+  ipHintContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(33, 150, 243, 0.1)', // Light blue background
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: AppColors.blue,
+  },
+  ipHintText: {
+    color: '#333',
+    fontSize: 12,
+    flexShrink: 1,
+    marginLeft: 8,
+    lineHeight: 18,
+  },
 });

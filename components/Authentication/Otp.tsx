@@ -1,25 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
+  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
   Animated,
   Dimensions,
   Easing,
   Image,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../APIservices';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient'; 
 
 const { height } = Dimensions.get('window');
 
@@ -279,7 +278,7 @@ const Otp = ({ route, navigation }) => {
           >
             <Text style={styles.welcomeText}>OTP Verification</Text>
             <Text style={styles.tagline}>
-              Please enter the 6-digit code sent to your phone number **{phoneNumber}**.
+              Please enter the 6-digit code sent to your phone number {phoneNumber}.
             </Text>
 
             {/* Themed OTP Input Fields */}
