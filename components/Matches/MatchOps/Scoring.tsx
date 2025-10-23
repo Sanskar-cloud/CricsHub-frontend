@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  BackHandler,
   FlatList,
   Image,
   Modal,
@@ -150,6 +151,24 @@ const ScoringScreen = ({ route, navigation }) => {
       direction: direction,
     });
   };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+      navigation.navigate('Home');
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.navigate('Home');
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   const getInitials = (name) => {
     if (!name) return "";

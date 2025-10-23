@@ -6,17 +6,17 @@ import Constants from 'expo-constants';
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // --- START FIX: Mocking missing imports/files ---
@@ -31,13 +31,13 @@ const AppColors = {
 };
 
 // Placeholder URL to resolve asset require() error
-const USER_PLACEHOLDER_IMAGE = require('../../assets/defaultLogo.png'); 
+const USER_PLACEHOLDER_IMAGE = require('../../assets/defaultLogo.png');
 // --- END FIX ---
 
 const { width, height } = Dimensions.get("window");
 
 // 1. USE EXPO-CONSTANTS TO GET THE VERSION
-const APP_VERSION = Constants.expoConfig?.version || "1.0.0"; 
+const APP_VERSION = Constants.expoConfig?.version || "1.0.0";
 const COPYRIGHT_TEXT = "© 2024 CricsHub. All rights reserved.";
 
 const Sidebar = ({
@@ -74,10 +74,10 @@ const Sidebar = ({
             try {
               await AsyncStorage.removeItem("hasCompletedProfilePrompt");
               await AsyncStorage.removeItem("jwtToken");
-              
+
               // Logout navigates back to the Login screen in the Outer Stack
               navigation.navigate("Login");
-              
+
             } catch (error) {
               console.error("Error removing token:", error);
               Alert.alert(
@@ -104,11 +104,11 @@ const Sidebar = ({
   const styles = StyleSheet.create({
     sidebar: {
       position: "absolute",
-      top: 0, 
+      top: 0,
       left: 0,
-      width: width, 
-      height: height, 
-      borderTopRightRadius: 0, 
+      width: width,
+      height: height,
+      borderTopRightRadius: 0,
       borderBottomRightRadius: 0,
       overflow: "hidden",
       zIndex: 100,
@@ -119,10 +119,10 @@ const Sidebar = ({
       shadowRadius: 8,
       elevation: 10,
     },
-    sidebarBackground: { 
-        flex: 1, 
-        backgroundColor: AppColors.white 
-    }, 
+    sidebarBackground: {
+      flex: 1,
+      backgroundColor: AppColors.white
+    },
     closeSidebarButton: {
       position: "absolute",
       top: Platform.OS === 'ios' ? 40 : StatusBar.currentHeight + 10,
@@ -165,7 +165,7 @@ const Sidebar = ({
       justifyContent: "center",
       alignItems: "center",
     },
-    userImage: { width: 88, height: 88, borderRadius: 44, resizeMode: "cover" }, 
+    userImage: { width: 88, height: 88, borderRadius: 44, resizeMode: "cover" },
     sidebarTitleEnhanced: {
       fontSize: 22,
       fontWeight: "700",
@@ -181,7 +181,7 @@ const Sidebar = ({
     sidebarOptionsWrapper: {
       marginTop: 10,
       paddingHorizontal: 15,
-      paddingBottom: 40, 
+      paddingBottom: 40,
     },
     sidebarItemPatch: {
       flexDirection: "row",
@@ -210,21 +210,21 @@ const Sidebar = ({
       marginTop: 20,
     },
     sidebarFooter: {
-        padding: 15,
-        borderTopWidth: 1,
-        borderTopColor: AppColors.lightGray,
-        alignItems: 'center',
-        backgroundColor: AppColors.white, 
-        paddingBottom: Platform.OS === 'ios' ? 30 : 15, 
+      padding: 15,
+      borderTopWidth: 1,
+      borderTopColor: AppColors.lightGray,
+      alignItems: 'center',
+      backgroundColor: AppColors.white,
+      paddingBottom: Platform.OS === 'ios' ? 30 : 15,
     },
     versionText: {
-        fontSize: 12,
-        color: AppColors.gray,
-        marginBottom: 4,
+      fontSize: 12,
+      color: AppColors.gray,
+      marginBottom: 4,
     },
     copyrightText: {
-        fontSize: 10,
-        color: AppColors.gray,
+      fontSize: 10,
+      color: AppColors.gray,
     },
   });
 
@@ -250,8 +250,14 @@ const Sidebar = ({
         >
           <View style={styles.userImageWrapperEnhanced}>
             {/* FIX: Using placeholder URI instead of local require() to resolve asset error */}
-            <Image
+            {/* <Image
               source={ USER_PLACEHOLDER_IMAGE }
+              style={styles.userImage}
+            /> */}
+            <Image
+              source={{
+                uri: 'https://i.pinimg.com/736x/08/2c/43/082c43db9fb9991bac2d4299a2f613d1.jpg',
+              }}
               style={styles.userImage}
             />
           </View>
@@ -291,17 +297,17 @@ const Sidebar = ({
             </Text>
           </TouchableOpacity>
         </ScrollView>
-      
+
         <View style={styles.sidebarFooter}>
-            <Text style={styles.versionText}>
-                Version: {APP_VERSION}
-            </Text>
-            <Text style={styles.copyrightText}>
-                {COPYRIGHT_TEXT}
-            </Text>
+          <Text style={styles.versionText}>
+            Version: {APP_VERSION}
+          </Text>
+          <Text style={styles.copyrightText}>
+            {COPYRIGHT_TEXT}
+          </Text>
         </View>
       </View>
-      
+
     </Animated.View>
   );
 };
