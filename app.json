@@ -17,8 +17,12 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow CricsHub to access your photos.",
-        "NSPhotoLibraryAddUsageDescription": "Allow CricsHub to save photos to your library."
-      }
+        "NSPhotoLibraryAddUsageDescription": "Allow CricsHub to save photos to your library.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      },
+      "bundleIdentifier": "dev.cricshub.team"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +35,9 @@
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
         "android.permission.ACCESS_MEDIA_LOCATION",
         "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO"
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
       ],
       "package": "dev.cricshub.team"
     },
@@ -53,7 +59,8 @@
           ]
         }
       ],
-      "expo-router"
+      "expo-router",
+      "./withAndroidNetworkSecurity"
     ],
     "extra": {
       "BASE_URL": "https://app.cricshub.com/api/v1",
