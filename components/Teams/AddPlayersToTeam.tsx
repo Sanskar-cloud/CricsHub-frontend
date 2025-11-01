@@ -29,11 +29,11 @@ import apiService from '../APIservices';
 const { height } = Dimensions.get('window');
 
 const AppColors = {
-  primary: '#4A90E2', 
-  secondary: '#357ABD', 
+  primary: '#4A90E2',
+  secondary: '#357ABD',
   success: '#4CAF50',
-  danger: '#F44336', 
-  warning: '#FFC107', 
+  danger: '#F44336',
+  warning: '#FFC107',
   lightBackground: '#F9F9F9',
   cardBackground: '#FFFFFF',
   textDark: '#333333',
@@ -56,7 +56,8 @@ const AddPlayersToTeam = () => {
 
   const navigation = useNavigation();
   const route = useRoute();
-  const { teamName, logoUri } = route.params;
+  // const { teamName, logoUri } = route.params;
+  const { teamName } = route.params;
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -198,11 +199,11 @@ const AddPlayersToTeam = () => {
       formData.append('playerIds', playerId.join(','));
 
       // Handle Logo upload
-      if (logoUri) {
-        const fileName = logoUri.split('/').pop();
-        const fileType = fileName.split('.').pop();
-        formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
-      }
+      // if (logoUri) {
+      //   const fileName = logoUri.split('/').pop();
+      //   const fileType = fileName.split('.').pop();
+      //   formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
+      // }
 
       const response = await apiService({
         endpoint: `teams`,

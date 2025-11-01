@@ -29,14 +29,14 @@
     "android": {
       "package": "dev.cricshub.team",
       "versionCode": 1,
-      "permissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.ACCESS_MEDIA_LOCATION",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO"
-      ],
+      // "permissions": [
+      //   "android.permission.READ_EXTERNAL_STORAGE",
+      //   "android.permission.WRITE_EXTERNAL_STORAGE",
+      //   "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+      //   "android.permission.ACCESS_MEDIA_LOCATION",
+      //   "android.permission.READ_MEDIA_IMAGES",
+      //   "android.permission.READ_MEDIA_VIDEO"
+      // ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -54,7 +54,10 @@
           "photosPermission": "Allow CricsHub to access your photos.",
           "savePhotosPermission": "Allow CricsHub to save photos.",
           "isAccessMediaLocationEnabled": true,
-          "granularPermissions": ["photo", "video"]
+          "granularPermissions": [
+            "photo",
+            "video"
+          ]
         }
       ],
       "expo-router"

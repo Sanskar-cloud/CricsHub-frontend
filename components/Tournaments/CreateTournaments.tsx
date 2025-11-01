@@ -1,8 +1,8 @@
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as ImagePicker from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
+// import * as ImagePicker from 'expo-image-picker';
+// import * as MediaLibrary from 'expo-media-library';
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -11,7 +11,6 @@ import {
   Dimensions,
   Easing,
   FlatList,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -26,7 +25,7 @@ import {
   View
 } from 'react-native';
 import { useAppNavigation } from '../NavigationService';
-import ensureMediaPermission from '../Permissions';
+// import ensureMediaPermission from '../Permissions';
 
 // Color constants for consistency
 const AppColors = {
@@ -179,9 +178,9 @@ const CreateTournament = () => {
   const [format, setFormat] = useState('');
   const [ballType, setBallType] = useState('');
   const [overs, setOvers] = useState('');
-  const [banner, setBanner] = useState(null);
+  // const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  // const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const [showFormatModal, setShowFormatModal] = useState(false); // 👈 New state for modal
   const [showBallTypeModal, setShowBallTypeModal] = useState(false); // 👈 New state for modal
   const [venues, setVenues] = useState([]);
@@ -228,11 +227,11 @@ const CreateTournament = () => {
     };
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      await requestPermission();
-    })();
-  }, [requestPermission]);
+  // useEffect(() => {
+  //   (async () => {
+  //     await requestPermission();
+  //   })();
+  // }, [requestPermission]);
 
   const getToken = useCallback(async () => {
     try {
@@ -293,7 +292,8 @@ const CreateTournament = () => {
         matchesPerDay: "1",
         matchesPerTeam: "1",
         venues,
-        banner,
+        // banner,
+        banner: null,
       };
 
       navigation.navigate("TournamentMatchOperatives", { tournamentData });
@@ -303,28 +303,28 @@ const CreateTournament = () => {
     } finally {
       setLoading(false);
     }
-  }, [tournamentName, startDate, endDate, format, venues, overs, ballType, banner, getUserUUID, navigation]);
+  }, [tournamentName, startDate, endDate, format, venues, overs, ballType, getUserUUID, navigation]);
 
-  const pickImage = useCallback(async () => {
-    const hasPermission = await ensureMediaPermission();
-    if (!hasPermission) return;
+  // const pickImage = useCallback(async () => {
+  //   const hasPermission = await ensureMediaPermission();
+  //   if (!hasPermission) return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-      allowsMultipleSelection: false,
-    });
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 3],
+  //     quality: 0.8,
+  //     allowsMultipleSelection: false,
+  //   });
 
-    if (!result.canceled) {
-      if (result.assets[0].fileSize > MAX_IMAGE_SIZE) {
-        showNotification('Image size should be less than 5MB', 'error');
-        return;
-      }
-      setBanner(result.assets[0].uri);
-    }
-  }, []);
+  //   if (!result.canceled) {
+  //     if (result.assets[0].fileSize > MAX_IMAGE_SIZE) {
+  //       showNotification('Image size should be less than 5MB', 'error');
+  //       return;
+  //     }
+  //     setBanner(result.assets[0].uri);
+  //   }
+  // }, []);
 
   const addVenue = () => {
     if (venueInput.trim() !== '') {
@@ -402,7 +402,7 @@ const CreateTournament = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            <Text style={styles.label}>Tournament Banner</Text>
+            {/* <Text style={styles.label}>Tournament Banner</Text>
             <TouchableOpacity onPress={pickImage} style={styles.bannerUploadContainer}>
               {banner ? (
                 <Image source={{ uri: banner }} style={styles.bannerImage} />
@@ -412,7 +412,7 @@ const CreateTournament = () => {
                   <Text style={styles.bannerUploadText}>Upload Tournament Banner</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <Text style={styles.label}>Tournament Name *</Text>
             <TextInput
               style={styles.input}

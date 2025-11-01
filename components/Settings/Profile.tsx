@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
+// import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,11 +18,11 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import apiService from "../APIservices";
-import ensureMediaPermission from "../Permissions";
+const USER_PLACEHOLDER_IMAGE = require('../../assets/defaultLogo.png');
 
 const { width, height } = Dimensions.get("window");
 const ROLE_OPTIONS = ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"];
@@ -395,38 +395,38 @@ const Settings = ({ navigation }) => {
     }
   };
 
-  const pickImage = async () => {
-    try {
-      const hasPermission = await ensureMediaPermission();
-      if (!hasPermission) return;
+  // const pickImage = async () => {
+  //   try {
+  //     const hasPermission = await ensureMediaPermission();
+  //     if (!hasPermission) return;
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+  //     const result = await ImagePicker.launchImageLibraryAsync({
+  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //       allowsEditing: true,
+  //       aspect: [1, 1],
+  //       quality: 0.8,
+  //     });
 
-      if (!result.canceled) {
-        setIsUploading(true);
-        const newImageUri = result.assets[0].uri;
+  //     if (!result.canceled) {
+  //       setIsUploading(true);
+  //       const newImageUri = result.assets[0].uri;
 
-        const success = await updateProfileData({ profilePicture: newImageUri });
+  //       const success = await updateProfileData({ profilePicture: newImageUri });
 
-        if (success) {
-          setProfile((prev) => ({
-            ...prev,
-            profilePicture: `${newImageUri}?${new Date().getTime()}`,
-          }));
-        }
-      }
-    } catch (err) {
-      console.error("Image upload error:", err);
-      showNotification("Failed to update profile picture", "error");
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  //       if (success) {
+  //         setProfile((prev) => ({
+  //           ...prev,
+  //           profilePicture: `${newImageUri}?${new Date().getTime()}`,
+  //         }));
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error("Image upload error:", err);
+  //     showNotification("Failed to update profile picture", "error");
+  //   } finally {
+  //     setIsUploading(false);
+  //   }
+  // };
 
   const handleEdit = (field) => {
     setEditField(field);
@@ -518,20 +518,20 @@ const Settings = ({ navigation }) => {
               >
                 <TouchableOpacity
                   style={styles.profileImageContainer}
-                  onPress={pickImage}
-                  disabled={isUploading}
+                // onPress={pickImage}
+                // disabled={isUploading}
                 >
                   {profile.profilePicture ? (
                     <>
                       <Image
-                        source={{ uri: profile.profilePicture }}
+                        source={USER_PLACEHOLDER_IMAGE}
                         style={styles.profileImage}
                       />
-                      {isUploading && (
+                      {/* {isUploading && (
                         <View style={styles.uploadOverlay}>
                           <ActivityIndicator size="large" color="#fff" />
                         </View>
-                      )}
+                      )} */}
                     </>
                   ) : (
                     <View style={styles.profileImagePlaceholder}>

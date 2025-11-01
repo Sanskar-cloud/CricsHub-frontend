@@ -249,15 +249,8 @@ const Sidebar = ({
           style={styles.sidebarHeaderEnhanced}
         >
           <View style={styles.userImageWrapperEnhanced}>
-            {/* FIX: Using placeholder URI instead of local require() to resolve asset error */}
-            {/* <Image
-              source={ USER_PLACEHOLDER_IMAGE }
-              style={styles.userImage}
-            /> */}
             <Image
-              source={{
-                uri: 'https://i.pinimg.com/736x/08/2c/43/082c43db9fb9991bac2d4299a2f613d1.jpg',
-              }}
+              source={USER_PLACEHOLDER_IMAGE}
               style={styles.userImage}
             />
           </View>

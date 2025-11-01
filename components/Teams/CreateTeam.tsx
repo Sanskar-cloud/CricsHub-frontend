@@ -1,11 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
+// import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   StatusBar as RNStatusBar,
@@ -16,7 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import ensureMediaPermission from '../Permissions';
+// import ensureMediaPermission from '../Permissions';
 
 const AppColors = {
   white: "#FFFFFF",
@@ -33,39 +32,40 @@ const AppColors = {
 
 const CreateTeam = () => {
   const [teamName, setTeamName] = useState('');
-  const [logoUri, setLogoUri] = useState(null);
+  // const [logoUri, setLogoUri] = useState(null);
   const navigation = useNavigation();
 
-  const pickImage = async () => {
-    const hasPermission = await ensureMediaPermission();
-    if (!hasPermission) return;
+  // const pickImage = async () => {
+  //   const hasPermission = await ensureMediaPermission();
+  //   if (!hasPermission) return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 4],
-      quality: 1,
-    });
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     aspect: [4, 4],
+  //     quality: 1,
+  //   });
 
-    if (!result.canceled) {
-      setLogoUri(result.assets[0].uri);
-    }
-  };
+  //   if (!result.canceled) {
+  //     setLogoUri(result.assets[0].uri);
+  //   }
+  // };
 
   const handleContinue = () => {
-    if (!teamName.trim() || !logoUri) {
+    // if (!teamName.trim() || !logoUri) {
+    if (!teamName.trim()) {
       Alert.alert('Error', 'Please fill in the team name and upload a logo.');
       return;
     }
     navigation.navigate('AddPlayersToTeam', {
       teamName,
-      logoUri,
+      // logoUri,
     });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      
+
       {Platform.OS === "android" && (
         <RNStatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       )}
@@ -87,7 +87,7 @@ const CreateTeam = () => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         // Adjust the offset if the keyboard still overlaps on Android
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={styles.contentWrapper}>
           <LinearGradient
@@ -96,7 +96,7 @@ const CreateTeam = () => {
             end={{ x: 1, y: 1 }}
             style={styles.gradientCard}
           >
-            <View style={styles.logoContainer}>
+            {/*<View style={styles.logoContainer}>
               <TouchableOpacity onPress={pickImage} activeOpacity={0.7}>
                 <View style={styles.logoPlaceholder}>
                   {logoUri ? (
@@ -106,7 +106,7 @@ const CreateTeam = () => {
                   )}
                 </View>
               </TouchableOpacity>
-            </View>
+            </View>*/}
 
             <TextInput
               style={styles.input}

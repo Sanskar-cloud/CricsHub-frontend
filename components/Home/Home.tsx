@@ -17,19 +17,18 @@ import {
 } from "react-native";
 // Assuming AppGradients and AppColors are available here
 import { AppColors, AppGradients } from "../../assets/constants/colors.js";
-import ensureMediaPermission from "../Permissions";
 
 
 const { width } = Dimensions.get("window");
 
 // Home now receives toggleSidebar and setUserName as props from MainScreens
 const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
-  
+
   const [viewableItems, setViewableItems] = useState([]);
   const [showFantasyPopup, setShowFantasyPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const animatedValues = useRef(new Map()).current;
-  
+
   const sections = [
     {
       title: "Start a Match",
@@ -76,12 +75,12 @@ const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
       }
     };
 
-    const askPermissions = async () => {
-      await ensureMediaPermission();
-    };
+    // const askPermissions = async () => {
+    //   await ensureMediaPermission();
+    // };
 
     fetchUserName();
-    askPermissions();
+    // askPermissions();
   }, [setUserName]);
 
   // --- Profile Prompt Logic ---
@@ -103,19 +102,19 @@ const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
   useEffect(() => {
     // If no animations have started, start them immediately for all cards.
     if (animatedValues.size === 0) {
-        sections.forEach((_, index) => {
-            if (!animatedValues.has(index)) {
-                animatedValues.set(index, new Animated.Value(0));
-            }
-            
-            Animated.spring(animatedValues.get(index), {
-                toValue: 1,
-                friction: 5,
-                tension: 40,
-                delay: 50 * index, // Staggered entry for a nice effect
-                useNativeDriver: true,
-            }).start();
-        });
+      sections.forEach((_, index) => {
+        if (!animatedValues.has(index)) {
+          animatedValues.set(index, new Animated.Value(0));
+        }
+
+        Animated.spring(animatedValues.get(index), {
+          toValue: 1,
+          friction: 5,
+          tension: 40,
+          delay: 50 * index, // Staggered entry for a nice effect
+          useNativeDriver: true,
+        }).start();
+      });
     }
   }, []); // Runs once on mount
 
@@ -237,7 +236,7 @@ const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
                 style={styles.profileButtonShadow}
               >
                 <LinearGradient
-                  colors={['#FFFFFF', '#E0E0E0']} 
+                  colors={['#FFFFFF', '#E0E0E0']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.profileButton}
@@ -366,7 +365,7 @@ const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
               keyExtractor={(item, index) => index.toString()}
               scrollEnabled={true}
               // Only needed for re-scrolling animations, initial load is handled by useEffect
-              onViewableItemsChanged={onViewableItemsChanged} 
+              onViewableItemsChanged={onViewableItemsChanged}
               viewabilityConfig={viewabilityConfig}
               renderItem={({ item, index }) => {
                 const animatedStyle = {
