@@ -3,6 +3,7 @@
     "name": "CricsHub",
     "slug": "CricsHub",
     "version": "1.0.0",
+    "owner": "Sanshjkl",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "cricshub",
