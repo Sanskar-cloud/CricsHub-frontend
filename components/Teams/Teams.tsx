@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
   FlatList,
-  TouchableOpacity,
   Image,
-  StyleSheet,
-  RefreshControl,
   Platform,
-  SafeAreaView,
   StatusBar as RNStatusBar,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
-import LottieView from "lottie-react-native";
-import { AppGradients, AppColors } from "../../assets/constants/colors.js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar"; // Expo StatusBar
+import { StatusBar } from "expo-status-bar";
+import LottieView from "lottie-react-native";
+import { AppColors, AppGradients } from "../../assets/constants/colors.js";
 import apiService from "../APIservices";
 
 const loaderAnimation = require("../../assets/animations/loader.json");
 const emptyTeamsAnimation = require("../../assets/empty.json");
+const defaultTeamLogo = require("../../assets/images/teamLogo.jpeg");
 
 const TeamPage = () => {
   const [teams, setTeams] = useState([]);
@@ -75,9 +76,6 @@ const TeamPage = () => {
 
   const renderTeamCard = ({ item }) => {
     const playersCount = (item.players || []).length;
-    const captainCount = item.captain ? 1 : 0;
-    const creatorCount =
-      item.creator && item.creator.id !== item.captain?.id ? 1 : 0;
     const totalMembers = playersCount;
 
     return (
@@ -92,12 +90,9 @@ const TeamPage = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Image
-            source={{
-              uri: item.logoPath || "https://via.placeholder.com/60x60",
-            }}
-            style={styles.teamLogo}
-          />
+          {/* 🖼️ Local hardcoded image */}
+          <Image source={defaultTeamLogo} style={styles.teamLogo} />
+
           <View style={styles.teamInfo}>
             <Text style={styles.teamName} numberOfLines={1}>
               {item.name || "N/A"}
@@ -109,9 +104,7 @@ const TeamPage = () => {
               </View>
               <View style={styles.captainContainer}>
                 <Text style={styles.captainIcon}>Ⓒ</Text>
-                <Text style={styles.captain}>
-                  {item.captain?.name || "Unknown"}
-                </Text>
+                <Text style={styles.captain}>{item.captain?.name || "Unknown"}</Text>
               </View>
             </View>
           </View>
@@ -123,11 +116,12 @@ const TeamPage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ✅ Fixes Android SafeArea with padding */}
-      {Platform.OS === "android" && <RNStatusBar backgroundColor="#87CEEB" barStyle="light-content" />}
+      {Platform.OS === "android" && (
+        <RNStatusBar backgroundColor="#87CEEB" barStyle="light-content" />
+      )}
       <StatusBar style={Platform.OS === "ios" ? "dark" : "light"} />
 
-      {/* Header - Always visible */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
@@ -146,15 +140,19 @@ const TeamPage = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Content area */}
+      {/* Content */}
       <View style={styles.container}>
         {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
-            <LottieView source={loaderAnimation} autoPlay loop style={styles.loaderAnimation} />
+            <LottieView
+              source={loaderAnimation}
+              autoPlay
+              loop
+              style={styles.loaderAnimation}
+            />
           </View>
         ) : (
           <>
-            {/* List / Empty State */}
             {teams.length > 0 ? (
               <FlatList
                 data={teams}
@@ -171,15 +169,25 @@ const TeamPage = () => {
               />
             ) : (
               <View style={styles.emptyContainer}>
-                <LottieView source={emptyTeamsAnimation} autoPlay loop={false} style={styles.emptyAnimation} />
+                <LottieView
+                  source={emptyTeamsAnimation}
+                  autoPlay
+                  loop={false}
+                  style={styles.emptyAnimation}
+                />
                 <Text style={styles.emptyTitle}>No Teams Found</Text>
-                <Text style={styles.emptySubtitle}>Create your first team to get started</Text>
+                <Text style={styles.emptySubtitle}>
+                  Create your first team to get started
+                </Text>
                 <TouchableOpacity
                   style={styles.createButton}
                   onPress={() => navigation.navigate("CreateTeam")}
                   activeOpacity={0.85}
                 >
-                  <LinearGradient colors={["#00BFFF", "#1E90FF"]} style={styles.createButtonSolid}>
+                  <LinearGradient
+                    colors={["#00BFFF", "#1E90FF"]}
+                    style={styles.createButtonSolid}
+                  >
                     <MaterialIcons name="add" size={20} color={AppColors.white} />
                     <Text style={styles.createButtonText}>Create Team</Text>
                   </LinearGradient>
@@ -196,13 +204,13 @@ const TeamPage = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#ffff", // Sky blue background
+    backgroundColor: "#fff",
     paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
   },
   container: {
     flex: 1,
     backgroundColor: AppColors.lightBackground,
-    paddingBottom:30
+    paddingBottom: 30,
   },
   header: {
     flexDirection: "row",

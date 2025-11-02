@@ -7,7 +7,6 @@ import {
   Animated,
   Dimensions,
   FlatList,
-  Image,
   Platform,
   Pressable,
   StatusBar as RNStatusBar,
@@ -43,12 +42,10 @@ const AppColors = {
 };
 
 const AppGradients = {
-  // This gradient is the key to the header color matching
   primaryCard: ['#34B8FF', '#1E88E5'],
   primaryButton: ['#34B8FF', '#1E88E5'],
   shimmer: ['#F0F0F0', '#E0E0E0', '#F0F0F0'],
 };
-
 
 const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
@@ -100,11 +97,6 @@ const TournamentCardOthers = ({ tournament, tournamentTimeStatus, index }) => {
     navigation.navigate('ManageTournaments', { id: tournamentData.id, isCreator, tab });
   }, [checkIsCreator, navigation]);
 
-  const sanitizedBannerUrl = tournament.banner?.replace(
-    'https://score360-7.onrender.com/api/v1/files/http:/',
-    'https://'
-  );
-
   const getStatusInfo = () => {
     switch (tournamentTimeStatus) {
       case 'LIVE':
@@ -137,47 +129,51 @@ const TournamentCardOthers = ({ tournament, tournamentTimeStatus, index }) => {
         style={styles.cardPressable}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.tournamentName} numberOfLines={1}>
-            {tournament.name}
-          </Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
-            <Icon name={statusInfo.icon} size={14} color={AppColors.white} />
-            <Text style={styles.statusText}>{statusInfo.text}</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.tournamentName} numberOfLines={2}>
+              {tournament.name}
+            </Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
+              <Icon name={statusInfo.icon} size={14} color={AppColors.white} />
+              <Text style={styles.statusText}>{statusInfo.text}</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.cardContent}>
-          <View style={styles.tournamentImageContainer}>
-            <Image
-              source={{ uri: sanitizedBannerUrl }}
-              style={styles.tournamentImage}
-              resizeMode='cover'
-            />
-          </View>
           <View style={styles.detailsContainer}>
             <View style={styles.detailItem}>
-              <Icon name="calendar-today" size={14} color={AppColors.primaryBlue} />
+              <Icon name="calendar-today" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {`${tournament.startDate[2]}/${tournament.startDate[1]}/${tournament.startDate[0]} - ${tournament.endDate[2]}/${tournament.endDate[1]}/${tournament.endDate[0]}`}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Icon name="sports-cricket" size={14} color={AppColors.primaryBlue} />
+              <Icon name="sports-cricket" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {tournament.type} overs • {tournament.ballType}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Icon name="location-on" size={14} color={AppColors.primaryBlue} />
+              <Icon name="location-on" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {tournament.location || 'Location not specified'}
               </Text>
             </View>
+            {tournament.prizePool && (
+              <View style={styles.detailItem}>
+                <Icon name="emoji-events" size={16} color={AppColors.primaryBlue} />
+                <Text style={styles.detailText} numberOfLines={1}>
+                  Prize: {tournament.prizePool}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         <View style={styles.cardFooter}>
           <Text style={styles.footerText}>Tap to View Tournament</Text>
+          <Icon name="arrow-forward" size={16} color={AppColors.primaryBlue} />
         </View>
       </Pressable>
     </Animated.View>
@@ -274,11 +270,6 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
     );
   }, [onTournamentDeleted]);
 
-  const sanitizedBannerUrl = tournament.banner?.replace(
-    'https://score360-7.onrender.com/api/v1/files/http:/',
-    'https://'
-  );
-
   return (
     <Animated.View
       style={[
@@ -296,68 +287,82 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
         style={styles.cardPressable}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.tournamentName} numberOfLines={1}>{tournament.name}</Text>
-          {isCreator && <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              deleteTournamentHandler(tournament.id);
-            }}
-            style={styles.deleteButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icon name="delete-outline" size={24} color={AppColors.errorRed} />
-          </TouchableOpacity>}
+          <View style={styles.titleContainer}>
+            <Text style={styles.tournamentName} numberOfLines={2}>{tournament.name}</Text>
+            {isCreator && (
+              <View style={styles.creatorBadge}>
+                <Icon name="star" size={14} color={AppColors.white} />
+                <Text style={styles.creatorText}>CREATOR</Text>
+              </View>
+            )}
+          </View>
+          {isCreator && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                deleteTournamentHandler(tournament.id);
+              }}
+              style={styles.deleteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Icon name="delete-outline" size={24} color={AppColors.errorRed} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.cardContent}>
-          <View style={styles.tournamentImageContainer}>
-            <Image
-              source={{ uri: sanitizedBannerUrl }}
-              style={styles.tournamentImage}
-              resizeMode='cover'
-            />
-          </View>
           <View style={styles.detailsContainer}>
             <View style={styles.detailItem}>
-              <Icon name="calendar-today" size={14} color={AppColors.primaryBlue} />
+              <Icon name="calendar-today" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {`${tournament.startDate[2]}/${tournament.startDate[1]}/${tournament.startDate[0]} - ${tournament.endDate[2]}/${tournament.endDate[1]}/${tournament.endDate[0]}`}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Icon name="sports-cricket" size={14} color={AppColors.primaryBlue} />
+              <Icon name="sports-cricket" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {tournament.type} overs • {tournament.ballType}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Icon name="location-on" size={14} color={AppColors.primaryBlue} />
+              <Icon name="location-on" size={16} color={AppColors.primaryBlue} />
               <Text style={styles.detailText} numberOfLines={1}>
                 {tournament.venues?.join(', ') || 'Location not specified'}
               </Text>
             </View>
+            {tournament.prizePool && (
+              <View style={styles.detailItem}>
+                <Icon name="emoji-events" size={16} color={AppColors.primaryBlue} />
+                <Text style={styles.detailText} numberOfLines={1}>
+                  Prize: {tournament.prizePool}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         <View style={styles.cardFooter}>
           <Text style={styles.footerText}>Tap to Manage Tournament</Text>
+          <Icon name="settings" size={16} color={AppColors.primaryBlue} />
         </View>
       </Pressable>
     </Animated.View>
   );
 };
 
-// New Shimmer Skeleton Card
+// Updated Shimmer Skeleton Card without image
 const ShimmerTournamentCard = () => {
   return (
     <View style={styles.cardContainer}>
       <View style={styles.cardHeader}>
-        <ShimmerPlaceholder style={styles.shimmerTournamentName} />
-        <ShimmerPlaceholder style={styles.shimmerStatusBadge} />
+        <View style={styles.titleContainer}>
+          <ShimmerPlaceholder style={styles.shimmerTournamentName} />
+          <ShimmerPlaceholder style={styles.shimmerStatusBadge} />
+        </View>
       </View>
       <View style={styles.cardContent}>
-        <ShimmerPlaceholder style={styles.shimmerImage} />
         <View style={styles.detailsContainer}>
+          <ShimmerPlaceholder style={styles.shimmerDetailLine} />
           <ShimmerPlaceholder style={styles.shimmerDetailLine} />
           <ShimmerPlaceholder style={styles.shimmerDetailLine} />
           <ShimmerPlaceholder style={styles.shimmerDetailLine} />
@@ -556,7 +561,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingBottom: 20,
-    // This value ensures content starts below the iOS notch/Android status bar
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
@@ -646,72 +650,79 @@ const styles = StyleSheet.create({
     color: AppColors.white,
     fontWeight: 'bold',
   },
-  // Card styles (unchanged)
+  // Enhanced Card styles without image
   cardContainer: {
     backgroundColor: AppColors.white,
-    borderRadius: 15,
-    marginBottom: 15,
+    borderRadius: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: AppColors.cardBorder,
   },
   cardPressable: {
-    borderRadius: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    alignItems: 'flex-start',
+    padding: 18,
+    paddingBottom: 12,
+    backgroundColor: AppColors.lightBackground,
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: 10,
   },
   tournamentName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: AppColors.darkText,
-    flexShrink: 1,
-    paddingRight: 10,
+    marginBottom: 8,
+    lineHeight: 22,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 15,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
     shadowColor: AppColors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
+  creatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: AppColors.primaryBlue,
+  },
+  creatorText: {
+    color: AppColors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
   statusText: {
     color: AppColors.white,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     marginLeft: 4,
   },
   cardContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 15,
-    paddingBottom: 15,
-  },
-  tournamentImageContainer: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 15,
-    backgroundColor: AppColors.lightBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tournamentImage: {
-    width: '100%',
-    height: '100%',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
   },
   detailsContainer: {
     flex: 1,
@@ -719,54 +730,54 @@ const styles = StyleSheet.create({
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 10,
+    paddingVertical: 2,
   },
   detailText: {
-    marginLeft: 8,
-    fontSize: 12,
+    marginLeft: 12,
+    fontSize: 14,
     color: AppColors.mediumText,
     flex: 1,
+    fontWeight: '500',
   },
   cardFooter: {
-    padding: 12,
-    backgroundColor: AppColors.lightBackground,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: AppColors.lightBackground,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.cardBorder,
   },
   footerText: {
-    color: AppColors.mediumText,
+    color: AppColors.primaryBlue,
     fontSize: 14,
+    fontWeight: '600',
   },
   deleteButton: {
     padding: 4,
   },
   // Shimmer-specific styles
   shimmerTournamentName: {
-    height: 20,
-    width: '60%',
-    borderRadius: 4,
+    height: 22,
+    width: '80%',
+    borderRadius: 6,
+    marginBottom: 8,
   },
   shimmerStatusBadge: {
     height: 20,
-    width: '30%',
+    width: '40%',
     borderRadius: 10,
   },
-  shimmerImage: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
-  },
   shimmerDetailLine: {
-    height: 12,
-    width: '80%',
+    height: 14,
+    width: '90%',
     borderRadius: 4,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   shimmerFooterText: {
     height: 14,
-    width: '70%',
+    width: '60%',
     borderRadius: 4,
   },
 });

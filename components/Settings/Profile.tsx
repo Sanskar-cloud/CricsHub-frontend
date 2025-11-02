@@ -538,9 +538,9 @@ const Settings = ({ navigation }) => {
                       <Icon name="user" size={60} color="#fff" />
                     </View>
                   )}
-                  <View style={styles.editPhotoButton}>
+                  {/* <View style={styles.editPhotoButton}>
                     <Icon name="camera" size={18} color="#fff" />
-                  </View>
+                  </View> */}
                 </TouchableOpacity>
               </ShimmerPlaceholder>
 
