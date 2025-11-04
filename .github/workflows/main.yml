@@ -36,21 +36,27 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Build with EAS
         id: eas_build
         run: |
           if [ "${GITHUB_REF##*/}" = "staging" ]; then
-            eas build --platform android --profile preview --non-interactive --output build.apk
-            echo "BUILD_PATH=build.apk" >> $GITHUB_ENV
+            BUILD_URL=$(eas build --platform android --profile preview --non-interactive --json | jq -r '.[0].artifacts.buildUrl')
+            echo "BUILD_URL=$BUILD_URL" >> $GITHUB_ENV
+            echo "✅ EAS build completed: $BUILD_URL"
           elif [ "${GITHUB_REF##*/}" = "main" ]; then
-            eas build --platform android --profile production --non-interactive --output build.aab
-            echo "BUILD_PATH=build.aab" >> $GITHUB_ENV
+            BUILD_URL=$(eas build --platform android --profile production --non-interactive --json | jq -r '.[0].artifacts.buildUrl')
+            echo "BUILD_URL=$BUILD_URL" >> $GITHUB_ENV
+            echo "✅ EAS build completed: $BUILD_URL"
           fi
 
       - name: Upload to Firebase App Distribution (only on staging)
-        if: github.ref == 'refs/heads/staging'
+        if: github.ref == 'refs/heads/main'
         run: |
-          firebase appdistribution:distribute $BUILD_PATH \
+          echo "📤 Uploading APK to Firebase App Distribution..."
+          firebase appdistribution:distribute ${{ env.BUILD_PATH }} \
             --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} \
             --groups "testers" \
             --token ${{ secrets.FIREBASE_TOKEN }}
