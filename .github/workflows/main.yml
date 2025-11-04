@@ -11,7 +11,7 @@ jobs:
     name: Build & Deploy Expo App
     runs-on: ubuntu-latest
     env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }} # makes the token available globally
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }} 
 
     steps:
       - name: Checkout repository
@@ -34,7 +34,7 @@ jobs:
           eas whoami
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build with EAS
         id: eas_build
