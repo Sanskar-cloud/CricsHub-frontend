@@ -27,7 +27,8 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Authenticate with Expo
-        run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
+        run: eas whoami --token ${{ secrets.EXPO_TOKEN }}
+
 
       - name: Install dependencies
         run: npm install
