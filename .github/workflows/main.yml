@@ -1,0 +1,63 @@
+name: Expo React Native CI/CD
+
+on:
+  push:
+    branches: [ "staging", "main" ]
+  pull_request:
+    branches: [ "staging", "main" ]
+
+jobs:
+  build:
+    name: Build & Deploy Expo App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Install Firebase Tools
+        run: npm install -g firebase-tools
+
+      - name: Authenticate with Expo
+        run: eas whoami || eas login --token ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build with EAS
+        id: eas_build
+        run: |
+          if [ "${GITHUB_REF##*/}" = "staging" ]; then
+            eas build --platform android --profile preview --non-interactive --output build.apk
+            echo "BUILD_PATH=build.apk" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF##*/}" = "main" ]; then
+            eas build --platform android --profile production --non-interactive --output build.aab
+            echo "BUILD_PATH=build.aab" >> $GITHUB_ENV
+          fi
+
+      - name: Upload to Firebase App Distribution (only on staging)
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          firebase appdistribution:distribute $BUILD_PATH \
+            --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} \
+            --groups "testers" \
+            --token ${{ secrets.FIREBASE_TOKEN }}
+
+      # - name: Upload to Google Play (only on main)
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT }}
+      #     packageName: com.cricshub.app # Replace with your package ID
+      #     releaseFiles: ${{ env.BUILD_PATH }}
+      #     track: internal
+
+     
