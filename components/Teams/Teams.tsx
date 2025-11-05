@@ -90,8 +90,7 @@ const TeamPage = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* 🖼️ Local hardcoded image */}
-          <Image source={defaultTeamLogo} style={styles.teamLogo} />
+          <Image source={item?.logoPath ? { uri: item?.logoPath } : defaultTeamLogo} style={styles.teamLogo} />
 
           <View style={styles.teamInfo}>
             <Text style={styles.teamName} numberOfLines={1}>
