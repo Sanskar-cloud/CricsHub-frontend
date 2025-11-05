@@ -1,10 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-// import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   StatusBar as RNStatusBar,
@@ -32,24 +33,32 @@ const AppColors = {
 
 const CreateTeam = () => {
   const [teamName, setTeamName] = useState('');
-  // const [logoUri, setLogoUri] = useState(null);
+  const [logoUri, setLogoUri] = useState(null);
   const navigation = useNavigation();
 
-  // const pickImage = async () => {
-  //   const hasPermission = await ensureMediaPermission();
-  //   if (!hasPermission) return;
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  //   const result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //     allowsEditing: true,
-  //     aspect: [4, 4],
-  //     quality: 1,
-  //   });
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'We need access to your photos to pick an image.');
+        return;
+      }
 
-  //   if (!result.canceled) {
-  //     setLogoUri(result.assets[0].uri);
-  //   }
-  // };
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 4],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setLogoUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+    }
+  };
 
   const handleContinue = () => {
     // if (!teamName.trim() || !logoUri) {
@@ -59,7 +68,7 @@ const CreateTeam = () => {
     }
     navigation.navigate('AddPlayersToTeam', {
       teamName,
-      // logoUri,
+      logoUri,
     });
   };
 
@@ -96,7 +105,7 @@ const CreateTeam = () => {
             end={{ x: 1, y: 1 }}
             style={styles.gradientCard}
           >
-            {/*<View style={styles.logoContainer}>
+            <View style={styles.logoContainer}>
               <TouchableOpacity onPress={pickImage} activeOpacity={0.7}>
                 <View style={styles.logoPlaceholder}>
                   {logoUri ? (
@@ -106,7 +115,7 @@ const CreateTeam = () => {
                   )}
                 </View>
               </TouchableOpacity>
-            </View>*/}
+            </View>
 
             <TextInput
               style={styles.input}

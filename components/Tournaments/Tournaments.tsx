@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Image,
   Platform,
   Pressable,
   StatusBar as RNStatusBar,
@@ -129,6 +130,11 @@ const TournamentCardOthers = ({ tournament, tournamentTimeStatus, index }) => {
         style={styles.cardPressable}
       >
         <View style={styles.cardHeader}>
+          {tournament?.banner ? (
+            <Image source={{ uri: tournament.banner }} style={styles.tournamentImage} />
+          ) : (
+            <View style={[styles.tournamentImage, { backgroundColor: '#ccc' }]} />
+          )}
           <View style={styles.titleContainer}>
             <Text style={styles.tournamentName} numberOfLines={2}>
               {tournament.name}
@@ -287,6 +293,11 @@ const TournamentCardMy = ({ tournament, onTournamentDeleted, index }) => {
         style={styles.cardPressable}
       >
         <View style={styles.cardHeader}>
+          {tournament?.banner ? (
+            <Image source={{ uri: tournament.banner }} style={styles.tournamentImage} />
+          ) : (
+            <View style={[styles.tournamentImage, { backgroundColor: '#ccc' }]} />
+          )}
           <View style={styles.titleContainer}>
             <Text style={styles.tournamentName} numberOfLines={2}>{tournament.name}</Text>
             {isCreator && (
@@ -674,6 +685,13 @@ const styles = StyleSheet.create({
     padding: 18,
     paddingBottom: 12,
     backgroundColor: AppColors.lightBackground,
+  },
+  tournamentImage: {
+    width: 80,
+    height: 60,
+    borderRadius: 8,
+    resizeMode: 'cover',
+    marginRight: 8,
   },
   titleContainer: {
     flex: 1,

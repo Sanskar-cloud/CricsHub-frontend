@@ -1,16 +1,18 @@
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
-// import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 // import * as MediaLibrary from 'expo-media-library';
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   Easing,
   FlatList,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -178,7 +180,7 @@ const CreateTournament = () => {
   const [format, setFormat] = useState('');
   const [ballType, setBallType] = useState('');
   const [overs, setOvers] = useState('');
-  // const [banner, setBanner] = useState(null);
+  const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(false);
   // const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
   const [showFormatModal, setShowFormatModal] = useState(false); // 👈 New state for modal
@@ -292,8 +294,7 @@ const CreateTournament = () => {
         matchesPerDay: "1",
         matchesPerTeam: "1",
         venues,
-        // banner,
-        banner: null,
+        banner,
       };
 
       navigation.navigate("TournamentMatchOperatives", { tournamentData });
@@ -305,26 +306,40 @@ const CreateTournament = () => {
     }
   }, [tournamentName, startDate, endDate, format, venues, overs, ballType, getUserUUID, navigation]);
 
-  // const pickImage = useCallback(async () => {
-  //   const hasPermission = await ensureMediaPermission();
-  //   if (!hasPermission) return;
+  const pickImage = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'We need access to your gallery to choose an image.'
+        );
+        return;
+      }
 
-  //   const result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //     allowsEditing: true,
-  //     aspect: [4, 3],
-  //     quality: 0.8,
-  //     allowsMultipleSelection: false,
-  //   });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
 
-  //   if (!result.canceled) {
-  //     if (result.assets[0].fileSize > MAX_IMAGE_SIZE) {
-  //       showNotification('Image size should be less than 5MB', 'error');
-  //       return;
-  //     }
-  //     setBanner(result.assets[0].uri);
-  //   }
-  // }, []);
+      if (!result.canceled && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+
+        if (selectedImage.fileSize && selectedImage.fileSize > MAX_IMAGE_SIZE) {
+          showNotification('Image size should be less than 5MB', 'error');
+          return;
+        }
+
+        setBanner(selectedImage.uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      showNotification('Failed to pick image. Please try again.', 'error');
+    }
+  }, []);
 
   const addVenue = () => {
     if (venueInput.trim() !== '') {
@@ -402,7 +417,7 @@ const CreateTournament = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            {/* <Text style={styles.label}>Tournament Banner</Text>
+            <Text style={styles.label}>Tournament Banner</Text>
             <TouchableOpacity onPress={pickImage} style={styles.bannerUploadContainer}>
               {banner ? (
                 <Image source={{ uri: banner }} style={styles.bannerImage} />
@@ -412,7 +427,7 @@ const CreateTournament = () => {
                   <Text style={styles.bannerUploadText}>Upload Tournament Banner</Text>
                 </View>
               )}
-            </TouchableOpacity> */}
+            </TouchableOpacity>
             <Text style={styles.label}>Tournament Name *</Text>
             <TextInput
               style={styles.input}

@@ -56,8 +56,7 @@ const AddPlayersToTeam = () => {
 
   const navigation = useNavigation();
   const route = useRoute();
-  // const { teamName, logoUri } = route.params;
-  const { teamName } = route.params;
+  const { teamName, logoUri } = route.params;
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -199,11 +198,11 @@ const AddPlayersToTeam = () => {
       formData.append('playerIds', playerId.join(','));
 
       // Handle Logo upload
-      // if (logoUri) {
-      //   const fileName = logoUri.split('/').pop();
-      //   const fileType = fileName.split('.').pop();
-      //   formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
-      // }
+      if (logoUri) {
+        const fileName = logoUri.split('/').pop();
+        const fileType = fileName.split('.').pop();
+        formData.append('logo', { uri: logoUri, name: fileName, type: `image/${fileType}` });
+      }
 
       const response = await apiService({
         endpoint: `teams`,
@@ -218,15 +217,13 @@ const AddPlayersToTeam = () => {
         setCaptainId(null);
         Alert.alert('Success', 'Team created successfully!', [{ text: 'OK', onPress: () => navigation.navigate('Teams') }]);
       } else {
-        // Use the specific backend error message from the response
         backendErrorMessage = response.error?.message || 'Failed to create team. No specific message provided.';
+        console.log(response);
 
-        // Show the alert and set the sticky error message
         Alert.alert('Error', backendErrorMessage);
         setErrorMessage(backendErrorMessage);
       }
     } catch (e) {
-      // If a network/catch error occurs, use the generic message
       Alert.alert('Error', backendErrorMessage);
       setErrorMessage(backendErrorMessage);
 
