@@ -235,7 +235,7 @@ const MainScreens = ({ navigation: rootNavigation }) => {
       {/* 3. Sidebar Component (Rendered above Stack/Overlay) */}
       <Sidebar
         sidebarAnim={sidebarAnim}
-        userName={userName}
+        // userName={userName}
         navigation={rootNavigation} // Pass the root navigator for sidebar navigation
         closeSidebar={closeSidebar}
         isSidebarVisible={isSidebarVisible}

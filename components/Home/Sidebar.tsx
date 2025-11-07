@@ -4,8 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from 'expo-constants';
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
@@ -18,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import apiService from "../APIservices";
 
 // --- START FIX: Mocking missing imports/files ---
 // Mocking AppColors to resolve missing import error
@@ -42,11 +44,15 @@ const COPYRIGHT_TEXT = "© 2024 CricsHub. All rights reserved.";
 
 const Sidebar = ({
   sidebarAnim,
-  userName,
+  // userName,
   navigation, // This is the navigation object from the OUTER STACK (the 'rootNavigation' you passed)
   closeSidebar,
   isSidebarVisible,
 }) => {
+
+  const [userName, setUserName] = useState("");
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // IMPORTANT: The sidebar items use screen names from the INNER STACK (defined in MainScreens).
   // Therefore, navigation must target the 'Main' screen, passing the desired screen name as a param.
@@ -61,6 +67,33 @@ const Sidebar = ({
     }
     closeSidebar();
   };
+
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService({
+        endpoint: "profile/current",
+        method: "GET",
+      });
+
+      if (!response.success) {
+        throw new Error(response.error?.message || "Failed to load profile data");
+      }
+
+      const profileData = response.data.data || response.data;
+      setUserName(profileData?.name);
+      setProfilePicture(profileData?.logoPath);
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [])
 
   const LogOutHandler = async () => {
     Alert.alert(
@@ -235,70 +268,75 @@ const Sidebar = ({
       style={[styles.sidebar, { transform: [{ translateX: sidebarAnim }] }]}
     >
       <View style={styles.sidebarBackground}>
-        <TouchableOpacity
-          onPress={closeSidebar}
-          style={styles.closeSidebarButton}
-        >
-          <Ionicons name="close" color={AppColors.black} size={28} />
-        </TouchableOpacity>
-
-        <LinearGradient
-          colors={["#34B8FF", "#0575E6"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.sidebarHeaderEnhanced}
-        >
-          <View style={styles.userImageWrapperEnhanced}>
-            <Image
-              source={USER_PLACEHOLDER_IMAGE}
-              style={styles.userImage}
-            />
-          </View>
-          <Text style={styles.sidebarTitleEnhanced}>
-            {userName || "Guest User"}
-          </Text>
-          <Text style={styles.sidebarSubtitleEnhanced}>
-            View Profile & Stats
-          </Text>
-        </LinearGradient>
-
-        <ScrollView contentContainerStyle={styles.sidebarOptionsWrapper} style={{ flex: 1 }}>
-          {sidebarItems.map(({ icon, text, screen }) => (
+        {isLoading ? <ActivityIndicator color={AppColors.blue} />
+          : <>
             <TouchableOpacity
-              key={screen}
-              style={styles.sidebarItemPatch}
-              onPress={() => navigateToScreen(screen)} // Using the nested navigation handler
+              onPress={closeSidebar}
+              style={styles.closeSidebarButton}
             >
-              <Ionicons name={icon} size={22} color={AppColors.blue} />
-              <Text style={styles.sidebarItemTextDark}>{text}</Text>
+              <Ionicons name="close" color={AppColors.black} size={28} />
             </TouchableOpacity>
-          ))}
 
-          <TouchableOpacity
-            style={[styles.sidebarItemPatch, styles.logoutPatch]}
-            onPress={LogOutHandler}
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={22}
-              color={AppColors.error}
-            />
-            <Text
-              style={[styles.sidebarItemTextDark, { color: AppColors.error }]}
+            <LinearGradient
+              colors={["#34B8FF", "#0575E6"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sidebarHeaderEnhanced}
             >
-              Logout
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+              <View style={styles.userImageWrapperEnhanced}>
+                <Image
+                  source={profilePicture ? { uri: profilePicture } : USER_PLACEHOLDER_IMAGE}
+                  style={styles.userImage}
+                />
+              </View>
+              <Text style={styles.sidebarTitleEnhanced}>
+                {userName || "Guest User"}
+              </Text>
+              <Text style={styles.sidebarSubtitleEnhanced}>
+                View Profile & Stats
+              </Text>
+            </LinearGradient>
 
-        <View style={styles.sidebarFooter}>
-          <Text style={styles.versionText}>
-            Version: {APP_VERSION}
-          </Text>
-          <Text style={styles.copyrightText}>
-            {COPYRIGHT_TEXT}
-          </Text>
-        </View>
+            <ScrollView contentContainerStyle={styles.sidebarOptionsWrapper} style={{ flex: 1 }}>
+              {sidebarItems.map(({ icon, text, screen }) => (
+                <TouchableOpacity
+                  key={screen}
+                  style={styles.sidebarItemPatch}
+                  onPress={() => navigateToScreen(screen)} // Using the nested navigation handler
+                >
+                  <Ionicons name={icon} size={22} color={AppColors.blue} />
+                  <Text style={styles.sidebarItemTextDark}>{text}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={[styles.sidebarItemPatch, styles.logoutPatch]}
+                onPress={LogOutHandler}
+              >
+                <Ionicons
+                  name="log-out-outline"
+                  size={22}
+                  color={AppColors.error}
+                />
+                <Text
+                  style={[styles.sidebarItemTextDark, { color: AppColors.error }]}
+                >
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <View style={styles.sidebarFooter}>
+              <Text style={styles.versionText}>
+                Version: {APP_VERSION}
+              </Text>
+              <Text style={styles.copyrightText}>
+                {COPYRIGHT_TEXT}
+              </Text>
+            </View>
+          </>
+        }
+
       </View>
 
     </Animated.View>

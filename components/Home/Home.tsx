@@ -17,7 +17,7 @@ import {
 } from "react-native";
 // Assuming AppGradients and AppColors are available here
 import { AppColors, AppGradients } from "../../assets/constants/colors.js";
-
+import apiService from "../APIservices";
 
 const { width } = Dimensions.get("window");
 
@@ -66,10 +66,17 @@ const Home = ({ navigation, toggleSidebar, userName, setUserName }) => {
   useEffect(() => {
     const fetchUserName = async () => {
       try {
-        const name = await AsyncStorage.getItem("userName");
-        if (name) {
-          setUserName(name); // Use the setter prop
+        const response = await apiService({
+          endpoint: "profile/current",
+          method: "GET",
+        });
+
+        if (!response.success) {
+          throw new Error(response.error?.message || "Failed to load profile data");
         }
+        const profileData = response.data.data || response.data;
+        setUserName(profileData.name);
+        await AsyncStorage.setItem("userName", profileData.name);
       } catch (error) {
         console.error("Failed to fetch user name:", error);
       }

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import * as ImagePicker from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -335,6 +335,7 @@ const Settings = ({ navigation }) => {
       }
 
       const profileData = response.data.data || response.data;
+      await AsyncStorage.setItem("userName", profileData.name);
       setProfile({
         name: profileData.name || "",
         phone: profileData.phone || profileData.phoneNumber || "",
@@ -384,6 +385,7 @@ const Settings = ({ navigation }) => {
       }
 
       setProfile((prev) => ({ ...prev, ...updatedData }));
+      fetchProfile();
       showNotification("Profile updated successfully");
       return true;
     } catch (err) {
@@ -395,38 +397,36 @@ const Settings = ({ navigation }) => {
     }
   };
 
-  // const pickImage = async () => {
-  //   try {
-  //     const hasPermission = await ensureMediaPermission();
-  //     if (!hasPermission) return;
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-  //     const result = await ImagePicker.launchImageLibraryAsync({
-  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //       allowsEditing: true,
-  //       aspect: [1, 1],
-  //       quality: 0.8,
-  //     });
+      if (!result.canceled) {
+        setIsUploading(true);
+        const newImageUri = result.assets[0].uri;
 
-  //     if (!result.canceled) {
-  //       setIsUploading(true);
-  //       const newImageUri = result.assets[0].uri;
+        const success = await updateProfileData({ profilePicture: newImageUri });
 
-  //       const success = await updateProfileData({ profilePicture: newImageUri });
+        if (success) {
+          setProfile((prev) => ({
+            ...prev,
+            profilePicture: `${newImageUri}?${new Date().getTime()}`,
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Image upload error:", err);
+      showNotification("Failed to update profile picture", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-  //       if (success) {
-  //         setProfile((prev) => ({
-  //           ...prev,
-  //           profilePicture: `${newImageUri}?${new Date().getTime()}`,
-  //         }));
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error("Image upload error:", err);
-  //     showNotification("Failed to update profile picture", "error");
-  //   } finally {
-  //     setIsUploading(false);
-  //   }
-  // };
 
   const handleEdit = (field) => {
     setEditField(field);
@@ -518,29 +518,29 @@ const Settings = ({ navigation }) => {
               >
                 <TouchableOpacity
                   style={styles.profileImageContainer}
-                // onPress={pickImage}
-                // disabled={isUploading}
+                  onPress={pickImage}
+                  disabled={isUploading}
                 >
                   {profile.profilePicture ? (
                     <>
                       <Image
-                        source={USER_PLACEHOLDER_IMAGE}
+                        source={profile?.profilePicture ? { uri: profile?.profilePicture } : USER_PLACEHOLDER_IMAGE}
                         style={styles.profileImage}
                       />
-                      {/* {isUploading && (
+                      {isUploading && (
                         <View style={styles.uploadOverlay}>
                           <ActivityIndicator size="large" color="#fff" />
                         </View>
-                      )} */}
+                      )}
                     </>
                   ) : (
                     <View style={styles.profileImagePlaceholder}>
                       <Icon name="user" size={60} color="#fff" />
                     </View>
                   )}
-                  {/* <View style={styles.editPhotoButton}>
+                  <View style={styles.editPhotoButton}>
                     <Icon name="camera" size={18} color="#fff" />
-                  </View> */}
+                  </View>
                 </TouchableOpacity>
               </ShimmerPlaceholder>
 
