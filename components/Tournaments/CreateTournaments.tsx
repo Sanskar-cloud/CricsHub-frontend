@@ -2,7 +2,6 @@ import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-ic
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-// import * as MediaLibrary from 'expo-media-library';
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -27,29 +26,30 @@ import {
   View
 } from 'react-native';
 import { useAppNavigation } from '../NavigationService';
-// import ensureMediaPermission from '../Permissions';
 
-// Color constants for consistency
+// Refined Color Palette
 const AppColors = {
   white: "#FFFFFF",
   black: "#000000",
-  blue: "#3498DB",
   background: "#F8F9FA",
-  cardBorder: "rgba(255, 255, 255, 0.2)",
+  cardBorder: "#F0F0F0",
   error: "#E74C3C",
-  darkText: "#000000",
-  lightText: "#666666",
+  darkText: "#2D3748",
+  lightText: "#718096",
   lightBackground: "#F8F9FA",
   primary: "#4A90E2",
-  primaryDark: "#357ABD",
+  primaryLight: "#EBF4FF",
   success: "#2ECC71",
   warning: "#F39C12",
+  card: "#FFFFFF",
+  border: "#E2E8F0",
+  subtleBackground: "#F7FAFC",
 };
 
 const { height, width } = Dimensions.get('window');
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-// Reusable Notification Component
+// Minimal Notification Component
 const Notification = ({ message, type, visible, onHide }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
 
@@ -77,8 +77,7 @@ const Notification = ({ message, type, visible, onHide }) => {
 
   if (!visible) return null;
 
-  const bgColor = type === "success" ? "#4CAF50" : "#F44336";
-  const iconName = type === "success" ? "check-circle" : "alert-circle";
+  const bgColor = type === "success" ? AppColors.success : AppColors.error;
 
   return (
     <Animated.View
@@ -88,7 +87,11 @@ const Notification = ({ message, type, visible, onHide }) => {
       ]}
     >
       <View style={styles.notificationContent}>
-        <Ionicons name={iconName === 'check-circle' ? 'checkmark-circle' : iconName} size={22} color="#fff" />
+        <Ionicons 
+          name={type === "success" ? "checkmark-circle" : "alert-circle"} 
+          size={20} 
+          color="#fff" 
+        />
         <Text style={styles.notificationText}>{message}</Text>
       </View>
       <TouchableOpacity onPress={onHide} style={styles.notificationClose}>
@@ -98,7 +101,7 @@ const Notification = ({ message, type, visible, onHide }) => {
   );
 };
 
-// Reusable Dropdown Modal Component
+// Clean Dropdown Modal
 const DropdownModal = ({ visible, options, onSelect, onClose, selectedValue, title }) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -153,9 +156,14 @@ const DropdownModal = ({ visible, options, onSelect, onClose, selectedValue, tit
                 ]}
                 onPress={() => onSelect(item.value)}
               >
-                <Text style={modalStyles.optionText}>{item.label}</Text>
+                <Text style={[
+                  modalStyles.optionText,
+                  selectedValue === item.value && modalStyles.selectedOptionText
+                ]}>
+                  {item.label}
+                </Text>
                 {selectedValue === item.value && (
-                  <Ionicons name="checkmark-circle" size={20} color={AppColors.primary} />
+                  <Ionicons name="checkmark" size={20} color={AppColors.primary} />
                 )}
               </TouchableOpacity>
             )}
@@ -182,9 +190,8 @@ const CreateTournament = () => {
   const [overs, setOvers] = useState('');
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(false);
-  // const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
-  const [showFormatModal, setShowFormatModal] = useState(false); // 👈 New state for modal
-  const [showBallTypeModal, setShowBallTypeModal] = useState(false); // 👈 New state for modal
+  const [showFormatModal, setShowFormatModal] = useState(false);
+  const [showBallTypeModal, setShowBallTypeModal] = useState(false);
   const [venues, setVenues] = useState([]);
   const [venueInput, setVenueInput] = useState('');
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -195,6 +202,7 @@ const CreateTournament = () => {
   });
 
   const [isFormValid, setIsFormValid] = useState(false);
+  
   useEffect(() => {
     const isValid =
       tournamentName.trim() !== '' &&
@@ -227,21 +235,6 @@ const CreateTournament = () => {
       show.remove();
       hide.remove();
     };
-  }, []);
-
-  // useEffect(() => {
-  //   (async () => {
-  //     await requestPermission();
-  //   })();
-  // }, [requestPermission]);
-
-  const getToken = useCallback(async () => {
-    try {
-      return await AsyncStorage.getItem('jwtToken');
-    } catch (error) {
-      console.error('Error retrieving token:', error);
-      return null;
-    }
   }, []);
 
   const getUserUUID = useCallback(async () => {
@@ -393,6 +386,7 @@ const CreateTournament = () => {
         onHide={hideNotification}
       />
 
+      {/* Original Header - Unchanged */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
@@ -416,54 +410,69 @@ const CreateTournament = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.card}>
-            <Text style={styles.label}>Tournament Banner</Text>
+          {/* Banner Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Tournament Banner</Text>
             <TouchableOpacity onPress={pickImage} style={styles.bannerUploadContainer}>
               {banner ? (
                 <Image source={{ uri: banner }} style={styles.bannerImage} />
               ) : (
                 <View style={styles.bannerPlaceholder}>
-                  <MaterialCommunityIcons name="image-plus" size={40} color={AppColors.primary} />
+                  <MaterialCommunityIcons name="image-plus" size={32} color={AppColors.primary} />
                   <Text style={styles.bannerUploadText}>Upload Tournament Banner</Text>
+                  {/* <Text style={styles.bannerSubText}>Optional</Text> */}
                 </View>
               )}
             </TouchableOpacity>
-            <Text style={styles.label}>Tournament Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter tournament name"
-              placeholderTextColor={AppColors.lightText}
-              value={tournamentName}
-              onChangeText={setTournamentName}
-            />
-            <Text style={styles.label}>Tournament Dates *</Text>
-            <View style={styles.dateRow}>
-              <View style={styles.dateInputContainer}>
-                <Text style={styles.dateLabel}>Start Date</Text>
-                <TouchableOpacity
-                  style={[styles.input, styles.dateInput]}
-                  onPress={() => setShowStartDatePicker(true)}
-                >
-                  <Text style={styles.placeholderText}>
-                    {moment(startDate).format('MMM D, YYYY')}
-                  </Text>
-                  <MaterialCommunityIcons name="calendar" size={20} color={AppColors.primary} />
-                </TouchableOpacity>
-              </View>
+          </View>
 
-              <Text style={styles.dateSeparator}>to</Text>
+          {/* Basic Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Basic Information</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tournament Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter tournament name"
+                placeholderTextColor={AppColors.lightText}
+                value={tournamentName}
+                onChangeText={setTournamentName}
+              />
+            </View>
 
-              <View style={styles.dateInputContainer}>
-                <Text style={styles.dateLabel}>End Date</Text>
-                <TouchableOpacity
-                  style={[styles.input, styles.dateInput]}
-                  onPress={() => setShowEndDatePicker(true)}
-                >
-                  <Text style={styles.placeholderText}>
-                    {moment(endDate).format('MMM D, YYYY')}
-                  </Text>
-                  <MaterialCommunityIcons name="calendar" size={20} color={AppColors.primary} />
-                </TouchableOpacity>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tournament Dates *</Text>
+              <View style={styles.dateRow}>
+                <View style={styles.dateInputContainer}>
+                  <Text style={styles.dateLabel}>Start Date</Text>
+                  <TouchableOpacity
+                    style={[styles.input, styles.dateInput]}
+                    onPress={() => setShowStartDatePicker(true)}
+                  >
+                    <Text style={styles.dateText}>
+                      {moment(startDate).format('MMM D, YYYY')}
+                    </Text>
+                    <MaterialCommunityIcons name="calendar" size={18} color={AppColors.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.dateSeparatorContainer}>
+                  <Text style={styles.dateSeparator}>to</Text>
+                </View>
+
+                <View style={styles.dateInputContainer}>
+                  <Text style={styles.dateLabel}>End Date</Text>
+                  <TouchableOpacity
+                    style={[styles.input, styles.dateInput]}
+                    onPress={() => setShowEndDatePicker(true)}
+                  >
+                    <Text style={styles.dateText}>
+                      {moment(endDate).format('MMM D, YYYY')}
+                    </Text>
+                    <MaterialCommunityIcons name="calendar" size={18} color={AppColors.primary} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -497,77 +506,106 @@ const CreateTournament = () => {
                 }}
               />
             )}
-            <Text style={styles.label}>Tournament Format *</Text>
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => setShowFormatModal(true)}
-            >
-              <Text style={[styles.dropdownButtonText, !format && styles.placeholderText]}>
-                {getFormatLabel(format)}
-              </Text>
-              <Ionicons
-                name={"chevron-down"}
-                size={20}
-                color={AppColors.primary}
-              />
-            </TouchableOpacity>
+          </View>
 
-            <Text style={styles.label}>Ball Type *</Text>
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => setShowBallTypeModal(true)}
-            >
-              <Text style={[styles.dropdownButtonText, !ballType && styles.placeholderText]}>
-                {getBallTypeLabel(ballType)}
-              </Text>
-              <Ionicons
-                name={"chevron-down"}
-                size={20}
-                color={AppColors.primary}
-              />
-            </TouchableOpacity>
-
-            <Text style={styles.label}>Number of Overs *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter number of overs per inning"
-              placeholderTextColor={AppColors.lightText}
-              value={overs}
-              onChangeText={setOvers}
-              keyboardType="numeric"
-            />
-
-            <Text style={styles.label}>Venues *</Text>
-            <View style={styles.venueInputRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="Add venue name"
-                placeholderTextColor={AppColors.lightText}
-                value={venueInput}
-                onChangeText={setVenueInput}
-                returnKeyType="done"
-                onSubmitEditing={addVenue}
-              />
-              <TouchableOpacity onPress={addVenue} style={styles.addVenueButton}>
-                <MaterialCommunityIcons name="plus-circle" size={28} color={AppColors.primary} />
+          {/* Tournament Settings */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Tournament Settings</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tournament Format *</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowFormatModal(true)}
+              >
+                <Text style={[styles.dropdownButtonText, !format && styles.placeholderText]}>
+                  {getFormatLabel(format)}
+                </Text>
+                <Ionicons
+                  name={"chevron-down"}
+                  size={18}
+                  color={AppColors.primary}
+                />
               </TouchableOpacity>
             </View>
 
-            {venues.length > 0 && (
-              <View style={styles.venueList}>
-                {venues.map((venue, index) => (
-                  <View key={index} style={styles.venueChip}>
-                    <Text style={styles.venueText}>{venue}</Text>
-                    <TouchableOpacity onPress={() => removeVenue(index)}>
-                      <MaterialCommunityIcons name="close-circle" size={18} color={AppColors.error} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Ball Type *</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowBallTypeModal(true)}
+              >
+                <Text style={[styles.dropdownButtonText, !ballType && styles.placeholderText]}>
+                  {getBallTypeLabel(ballType)}
+                </Text>
+                <Ionicons
+                  name={"chevron-down"}
+                  size={18}
+                  color={AppColors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Number of Overs *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter number of overs per inning"
+                placeholderTextColor={AppColors.lightText}
+                value={overs}
+                onChangeText={setOvers}
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
-          <View style={{ height: 80 }} />
+          {/* Venues */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Venues</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Add Venues *</Text>
+              <View style={styles.venueInputRow}>
+                <TextInput
+                  style={[styles.input, styles.venueInput]}
+                  placeholder="Enter venue name"
+                  placeholderTextColor={AppColors.lightText}
+                  value={venueInput}
+                  onChangeText={setVenueInput}
+                  returnKeyType="done"
+                  onSubmitEditing={addVenue}
+                />
+                <TouchableOpacity 
+                  onPress={addVenue} 
+                  style={styles.addVenueButton}
+                  disabled={!venueInput.trim()}
+                >
+                  <MaterialCommunityIcons 
+                    name="plus" 
+                    size={20} 
+                    color={venueInput.trim() ? AppColors.primary : AppColors.lightText} 
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {venues.length > 0 && (
+                <View style={styles.venueList}>
+                  {venues.map((venue, index) => (
+                    <View key={index} style={styles.venueChip}>
+                      <Text style={styles.venueText}>{venue}</Text>
+                      <TouchableOpacity 
+                        onPress={() => removeVenue(index)} 
+                        style={styles.removeVenueButton}
+                      >
+                        <Ionicons name="close" size={16} color={AppColors.lightText} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -607,10 +645,10 @@ const CreateTournament = () => {
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color={AppColors.white} />
+              <ActivityIndicator color={AppColors.white} size="small" />
             ) : (
               <View style={styles.buttonContent}>
-                <MaterialCommunityIcons name="trophy" size={20} color={AppColors.white} />
+                <MaterialCommunityIcons name="trophy-outline" size={20} color={AppColors.white} />
                 <Text style={styles.buttonText}>Create Tournament</Text>
               </View>
             )}
@@ -629,11 +667,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: AppColors.lightBackground,
+    backgroundColor: AppColors.subtleBackground,
   },
   scrollView: {
     flex: 1,
   },
+  // Original Header Styles - Unchanged
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -657,32 +696,39 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 20,
   },
-  card: {
+  // Minimal Section Styles
+  section: {
     backgroundColor: AppColors.white,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: AppColors.border,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: AppColors.darkText,
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: AppColors.darkText,
     marginBottom: 8,
-    marginLeft: 4,
   },
+  // Clean Banner Styles
   bannerUploadContainer: {
-    height: 150,
+    height: 140,
     backgroundColor: AppColors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: AppColors.primary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: AppColors.border,
     borderStyle: 'dashed',
     overflow: 'hidden',
   },
@@ -697,27 +743,32 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   bannerUploadText: {
-    color: AppColors.primary,
-    fontSize: 16,
-    marginTop: 10,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  input: {
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
-    padding: 16,
     color: AppColors.darkText,
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: AppColors.background,
-    fontSize: 16,
+    fontSize: 14,
+    marginTop: 8,
+    fontWeight: '400',
   },
+  bannerSubText: {
+    color: AppColors.lightText,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  // Minimal Input Styles
+  input: {
+    borderColor: AppColors.border,
+    borderWidth: 1,
+    padding: 14,
+    color: AppColors.darkText,
+    borderRadius: 8,
+    backgroundColor: AppColors.white,
+    fontSize: 15,
+    fontWeight: '400',
+  },
+  // Clean Date Picker Styles
   dateRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    marginBottom: 16,
   },
   dateInputContainer: {
     flex: 1,
@@ -726,56 +777,104 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: AppColors.darkText,
     marginBottom: 8,
-    marginLeft: 4,
+    fontWeight: '500',
   },
   dateInput: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
+  },
+  dateText: {
+    fontSize: 15,
+    color: AppColors.darkText,
+    fontWeight: '400',
+  },
+  dateSeparatorContainer: {
+    paddingHorizontal: 12,
+    paddingBottom: 24,
   },
   dateSeparator: {
-    color: AppColors.darkText,
-    marginHorizontal: 10,
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 32,
+    color: AppColors.lightText,
+    fontSize: 14,
+    fontWeight: '400',
   },
+  // Minimal Dropdown Styles
   dropdownButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: '#E0E0E0',
+    borderColor: AppColors.border,
     borderWidth: 1,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: AppColors.background,
+    padding: 14,
+    borderRadius: 8,
+    backgroundColor: AppColors.white,
   },
   dropdownButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     color: AppColors.darkText,
+    fontWeight: '400',
   },
+  // Clean Venue Styles
+  venueInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  venueInput: {
+    flex: 1,
+    marginRight: 12,
+  },
+  addVenueButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: AppColors.primaryLight,
+  },
+  venueList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+    gap: 8,
+  },
+  venueChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  venueText: {
+    fontSize: 13,
+    color: AppColors.darkText,
+    marginRight: 6,
+    fontWeight: '400',
+  },
+  removeVenueButton: {
+    padding: 2,
+  },
+  // Professional Floating Button
   floatingButtonContainer: {
     position: 'absolute',
     bottom: 20,
     left: 16,
     right: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
   },
   floatingButton: {
     backgroundColor: AppColors.primary,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   disabledButton: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -785,28 +884,28 @@ const styles = StyleSheet.create({
   buttonText: {
     color: AppColors.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginLeft: 8,
   },
   placeholderText: {
     color: AppColors.lightText,
   },
-  // Notification styles
+  // Clean Notification Styles
   notificationContainer: {
     position: "absolute",
     top: 70,
     left: 20,
     right: 20,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     zIndex: 1000,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   notificationContent: {
     flexDirection: "row",
@@ -815,50 +914,13 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 14,
     flex: 1,
-    fontWeight: "500",
+    fontWeight: "400",
     marginLeft: 10,
   },
   notificationClose: {
     padding: 4,
-  },
-  venueInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  addVenueButton: {
-    marginLeft: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  venueList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-    gap: 8,
-  },
-  venueChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F0FE', // soft blue background
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  venueText: {
-    fontSize: 14,
-    color: '#333',
-    marginRight: 6,
-    fontWeight: '500',
   },
 });
 
@@ -870,30 +932,25 @@ const modalStyles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: AppColors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 34,
     maxHeight: height * 0.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 20,
   },
   modalHandle: {
-    width: 60,
-    height: 6,
-    backgroundColor: '#ccc',
-    borderRadius: 3,
+    width: 40,
+    height: 4,
+    backgroundColor: AppColors.border,
+    borderRadius: 2,
     alignSelf: 'center',
-    marginVertical: 10,
+    marginVertical: 12,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
     color: AppColors.darkText,
   },
   optionsList: {
@@ -903,17 +960,25 @@ const modalStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: AppColors.border,
   },
   optionText: {
-    fontSize: 16,
+    fontSize: 15,
     color: AppColors.darkText,
+    fontWeight: '400',
   },
   selectedOption: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 8,
+    marginHorizontal: -4,
+    paddingHorizontal: 12,
+  },
+  selectedOptionText: {
+    color: AppColors.primary,
+    fontWeight: '500',
   },
 });
 

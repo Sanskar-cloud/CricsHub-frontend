@@ -136,6 +136,7 @@ const MainScreens = ({ navigation: rootNavigation }) => {
     "Scoring",
     "SelectRoles",
     "SelectRoles2ndInnings",
+    CreateTeam,
     "MatchStartTransition",
     "MatchScoreCard",
     "ScheduleMatch",

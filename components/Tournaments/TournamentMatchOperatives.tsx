@@ -1,22 +1,30 @@
-import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Platform,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  StatusBar,
-  SafeAreaView,
-  Image,
-  FlatList,
+  View
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import apiService from "../APIservices";
 import { AppColors } from "../../assets/constants/colors";
+import apiService from "../APIservices";
+import CustomAlertDialog from "../Customs/CustomDialog.js";
+
+// Define gradient colors for the alert buttons
+const AlertGradients = {
+  primary: ['#4A90E2', '#357ABD'],
+  success: ['#4CAF50', '#45a049'],
+  error: ['#F44336', '#d32f2f'],
+  warning: ['#FFC107', '#ff8f00'],
+  info: ['#17A2B8', '#0288d1']
+};
 
 const TournamentMatchOperatives = ({ route, navigation }) => {
   const { tournamentData } = route.params;
@@ -25,6 +33,31 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [selectedOperatives, setSelectedOperatives] = useState([]);
   const [enableButton, setEnableButton] = useState(true);
+  const [creatingTournament, setCreatingTournament] = useState(false);
+
+  // Custom Alert Dialog States
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    type: 'info',
+    buttons: []
+  });
+
+  // Custom Alert Helper Function
+  const showCustomAlert = (message, type = 'info', buttons = []) => {
+    setAlertConfig({
+      title: '',
+      message,
+      type,
+      buttons: buttons.length > 0 ? buttons : [{ 
+        text: 'OK', 
+        onPress: () => setShowAlert(false),
+        gradientColors: AlertGradients.primary
+      }]
+    });
+    setShowAlert(true);
+  };
 
   const fetchPlayers = async (query) => {
     try {
@@ -47,7 +80,14 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
 
       const nameData = nameRes.success ? nameRes.data.data || [] : [];
       const phoneData = phoneRes.success ? phoneRes.data.data || [] : [];
-      setFilteredPlayers([...nameData, ...phoneData]);
+      
+      // Remove duplicates based on player id
+      const allPlayers = [...nameData, ...phoneData];
+      const uniquePlayers = allPlayers.filter((player, index, self) =>
+        index === self.findIndex(p => p.id === player.id)
+      );
+      
+      setFilteredPlayers(uniquePlayers);
     } catch (err) {
       console.error("Search failed:", err);
       setFilteredPlayers([]);
@@ -69,7 +109,7 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
 
   const handleSelectPlayer = (player) => {
     if (selectedOperatives.some((op) => op.id === player.id)) {
-      Alert.alert("Already Added", `${player.name} is already selected.`);
+      showCustomAlert(`${player.name} is already selected.`, 'warning');
       return;
     }
     setSelectedOperatives((prev) => [...prev, player]);
@@ -83,7 +123,7 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
 
   const handleSubmit = async () => {
     if (selectedOperatives.length === 0) {
-      Alert.alert("Error", "Please select at least one operative.");
+      showCustomAlert("Please select at least one operative.", 'error');
       return;
     }
 
@@ -117,29 +157,41 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
             uri: tournamentData.banner,
             name: fileName,
             type: `image/${fileType}`,
-          } as any // Cast to any for React Native compatibility
+          }
         );
       }
 
       setEnableButton(false);
+      setCreatingTournament(true);
+
       const response = await apiService({
         endpoint: `tournaments/${tournamentData.userId}`,
         method: "POST",
         body: formData,
-        headers: { "Content-Type": "multipart/form-data" },
+        isMultipart: true
       });
 
       if (response.success) {
-        Alert.alert("Success", "Tournament created successfully!");
-        navigation.navigate("Tournaments");
+        showCustomAlert('Tournament created successfully!', 'success', [
+          { 
+            text: 'OK', 
+            onPress: () => {
+              setShowAlert(false);
+              navigation.navigate("Tournaments");
+            },
+            gradientColors: AlertGradients.success
+          }
+        ]);
       } else {
         setEnableButton(true);
-        Alert.alert("Error", response.error?.message || "Failed to create tournament");
+        setCreatingTournament(false);
+        showCustomAlert(response.error?.message || "Failed to create tournament", 'error');
       }
     } catch (err) {
       setEnableButton(true);
+      setCreatingTournament(false);
       console.error(err);
-      Alert.alert("Error", "Something went wrong while creating tournament.");
+      showCustomAlert("Something went wrong while creating tournament.", 'error');
     }
   };
 
@@ -179,13 +231,14 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
         </View>
         <View style={styles.playerTextContainer}>
           <Text style={styles.playerText}>{item.name}</Text>
+          {item.role && <Text style={styles.playerRole}>{item.role}</Text>}
         </View>
       </View>
     </TouchableOpacity>
   );
 
   const renderSelectedOperatives = ({ item }) => (
-    <View style={styles.selectedItem} key={item.id}>
+    <View style={styles.selectedItem}>
       <View style={styles.profileIconContainer}>
         <Image
           source={
@@ -198,6 +251,7 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
       </View>
       <View style={styles.playerTextContainer}>
         <Text style={styles.playerText}>{item.name}</Text>
+        {item.role && <Text style={styles.playerRole}>{item.role}</Text>}
       </View>
       <TouchableOpacity onPress={() => handleRemovePlayer(item.id)}>
         <Ionicons name="close-circle" size={20} color={AppColors.black} />
@@ -206,24 +260,18 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar />
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={AppColors.white} translucent={true} />
+      
+      {/* Content Wrapper */}
+      <View style={styles.contentWrapper}>
         <Text style={styles.title}>Select Tournament Operatives</Text>
         <Text style={styles.subTitle}>
           Tournament operatives will manage scoring and streaming
         </Text>
 
-        <View style={styles.selectedList}>
-          <FlatList
-            data={selectedOperatives}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderSelectedOperatives}
-            contentContainerStyle={{ gap: 10 }}
-          />
-        </View>
-
-        <View style={{ position: "relative", marginBottom: 10 }}>
+        {/* Search Section */}
+        <View style={styles.searchSection}>
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={20} color="#4A90E2" />
             <TextInput
@@ -254,48 +302,109 @@ const TournamentMatchOperatives = ({ route, navigation }) => {
           ) : (
             filteredPlayers.length > 0 && (
               <View style={styles.dropdownContainer}>
-                <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-                  {filteredPlayers.map((player) => (
-                    <View key={player.id}>{renderPlayerItem({ item: player })}</View>
-                  ))}
-                </ScrollView>
+                <FlatList
+                  data={filteredPlayers}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={renderPlayerItem}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                />
               </View>
             )
           )}
         </View>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={!enableButton}>
-          <Text style={styles.submitButtonText}>Create Tournament</Text>
+        {/* Selected Operatives List */}
+        <View style={styles.selectedListContainer}>
+          <FlatList
+            data={selectedOperatives}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderSelectedOperatives}
+            contentContainerStyle={{ gap: 10 }}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </View>
+
+      {/* Submit Button Container */}
+      <View style={styles.submitButtonContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.submitButton, 
+            (!enableButton || creatingTournament) && styles.submitButtonDisabled
+          ]} 
+          onPress={handleSubmit} 
+          disabled={!enableButton || creatingTournament}
+        >
+          {creatingTournament ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.submitButtonText}>Create Tournament</Text>
+          )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+
+      {/* Custom Alert Dialog */}
+      <CustomAlertDialog
+        visible={showAlert}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={alertConfig.buttons}
+        onClose={() => setShowAlert(false)}
+      />
+    </View>
   );
 };
 
 export default TournamentMatchOperatives;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  title: { fontSize: 20, fontWeight: "bold" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 50,
+  },
+  contentWrapper: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: AppColors.darkText,
+    marginBottom: 4,
+  },
   subTitle: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 10,
+    marginBottom: 20,
     color: AppColors.infoGrey,
+  },
+  searchSection: {
+    position: "relative",
+    marginBottom: 20,
+    zIndex: 1,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#ccc",
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: "#f9f9f9",
+    height: 50,
   },
-  input: { flex: 1, marginLeft: 8, paddingVertical: 12 },
+  input: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: AppColors.darkText,
+  },
   dropdownContainer: {
     position: "absolute",
-    top: 50,
+    top: "100%",
     left: 0,
     right: 0,
     backgroundColor: "#fff",
@@ -311,32 +420,55 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   playerItem: {
-    padding: 10,
+    padding: 12,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  selectedList: { marginVertical: 20 },
+  selectedListContainer: {
+    flex: 1,
+    marginVertical: 10,
+  },
   selectedItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 8,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
-    gap: 10,
+    padding: 12,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  submitButtonContainer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: "#fff",
   },
   submitButton: {
     backgroundColor: "#4A90E2",
-    padding: 14,
+    padding: 16,
     borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
+    height: 50,
   },
-  submitButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-  playerInfoContainer: { flexDirection: "row", alignItems: "center", flex: 1 },
+  submitButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  playerInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
   profileIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    marginRight: 15,
+    marginRight: 12,
     backgroundColor: AppColors.inputBackground,
     justifyContent: "center",
     alignItems: "center",
@@ -344,9 +476,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: AppColors.inputBorder,
   },
-  userImage: { width: "100%", height: "100%", borderRadius: 24 },
-  playerTextContainer: { flex: 1 },
-  playerText: { fontSize: 17, fontWeight: "600", color: AppColors.darkText },
+  userImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 24,
+  },
+  playerTextContainer: {
+    flex: 1,
+  },
+  playerText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: AppColors.darkText,
+    marginBottom: 2,
+  },
   playerRole: {
     fontSize: 14,
     color: AppColors.lightText,

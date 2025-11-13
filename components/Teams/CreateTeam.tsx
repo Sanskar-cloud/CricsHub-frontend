@@ -16,19 +16,22 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-// import ensureMediaPermission from '../Permissions';
 
 const AppColors = {
   white: "#FFFFFF",
   black: "#000000",
   blue: "#3498DB",
-  background: "#F8F9FA",
+  background: "#F8F9FF",
   cardBorder: "rgba(255, 255, 255, 0.2)",
   error: "#E74C3C",
-  darkText: "#000000",
-  lightBackground: "#F8F9FA",
-  primaryGradientStart: '#4A90E2',
-  primaryGradientEnd: '#6BB9F0',
+  darkText: "#2D3748",
+  lightText: "#718096",
+  lightBackground: "#F7FAFC",
+};
+
+const AppGradients = {
+  primaryCard: ['#3498DB', '#2980B9'],
+  primaryButton: ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)'],
 };
 
 const CreateTeam = () => {
@@ -48,8 +51,8 @@ const CreateTeam = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 4],
-        quality: 1,
+        aspect: [1, 1],
+        quality: 0.8,
       });
 
       if (!result.canceled) {
@@ -57,29 +60,29 @@ const CreateTeam = () => {
       }
     } catch (error) {
       console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
 
   const handleContinue = () => {
-    // if (!teamName.trim() || !logoUri) {
     if (!teamName.trim()) {
-      Alert.alert('Error', 'Please fill in the team name and upload a logo.');
+      Alert.alert('Team Name Required', 'Please enter your team name to continue.');
       return;
     }
+    
     navigation.navigate('AddPlayersToTeam', {
-      teamName,
+      teamName: teamName.trim(),
       logoUri,
     });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-
       {Platform.OS === "android" && (
         <RNStatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       )}
 
-      {/* Header */}
+      {/* Original Header - Unchanged */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerButton}
@@ -95,42 +98,96 @@ const CreateTeam = () => {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // Adjust the offset if the keyboard still overlaps on Android
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} // Increased offset for iOS
       >
-        <View style={styles.contentWrapper}>
-          <LinearGradient
-            colors={[AppColors.primaryGradientStart, AppColors.primaryGradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradientCard}
-          >
-            <View style={styles.logoContainer}>
-              <TouchableOpacity onPress={pickImage} activeOpacity={0.7}>
-                <View style={styles.logoPlaceholder}>
-                  {logoUri ? (
-                    <Image source={{ uri: logoUri }} style={styles.logo} />
-                  ) : (
-                    <MaterialIcons name="add-a-photo" size={40} color={AppColors.primaryGradientStart} />
-                  )}
+        <View style={styles.mainContent}>
+          <View style={styles.cardContainer}>
+            <LinearGradient
+              colors={AppGradients.primaryCard}
+              style={styles.cardGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {/* Card Header */}
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIconContainer}>
+                  <MaterialIcons name="groups" size={24} color={AppColors.white} />
                 </View>
+              </View>
+              
+              {/* Card Body */}
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>Create Your Team</Text>
+                <Text style={styles.cardDescription}>Build your cricket squad</Text>
+
+                {/* Logo Upload Section */}
+                <View style={styles.logoSection}>
+                  <TouchableOpacity 
+                    onPress={pickImage} 
+                    style={styles.logoContainer}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.logoPlaceholder}>
+                      {logoUri ? (
+                        <Image source={{ uri: logoUri }} style={styles.logoImage} />
+                      ) : (
+                        <View style={styles.logoPlaceholderContent}>
+                          <MaterialIcons name="add-a-photo" size={28} color={AppColors.white} />
+                          <Text style={styles.logoPlaceholderText}>Add Logo</Text>
+                        </View>
+                      )}
+                    </View>
+                    {logoUri && (
+                      <View style={styles.logoOverlay}>
+                        <MaterialIcons name="edit" size={16} color={AppColors.white} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* Team Name Input */}
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputWrapper}>
+                    <MaterialIcons name="edit" size={18} color="rgba(255,255,255,0.7)" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter team name"
+                      placeholderTextColor="rgba(255,255,255,0.7)"
+                      value={teamName}
+                      onChangeText={setTeamName}
+                      maxLength={25}
+                      autoCapitalize="words"
+                      autoFocus
+                    />
+                  </View>
+                  <Text style={styles.charCount}>
+                    {teamName.length}/25
+                  </Text>
+                </View>
+              </View>
+
+              {/* Continue Button - Matching Home Page Card Button Style */}
+              <TouchableOpacity 
+                onPress={handleContinue} 
+                style={[
+                  styles.cardButton,
+                  !teamName.trim() && styles.cardButtonDisabled
+                ]}
+                disabled={!teamName.trim()}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={AppGradients.primaryButton}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.cardButtonText}>
+                    Continue
+                  </Text>
+                  <MaterialIcons name="arrow-forward" size={16} color={AppColors.white} />
+                </LinearGradient>
               </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Team Name"
-              placeholderTextColor="#999"
-              value={teamName}
-              onChangeText={setTeamName}
-              maxLength={20}
-              autoCapitalize="words"
-            />
-
-            <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
-              <Text style={styles.continueButtonText}>Continue</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+            </LinearGradient>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -145,8 +202,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: AppColors.lightBackground,
+    backgroundColor: '#F8F9FF',
   },
+  
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -156,6 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.white,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.05)",
+    zIndex: 10, // Ensure header stays on top
   },
   heading: {
     fontSize: 20,
@@ -166,73 +225,178 @@ const styles = StyleSheet.create({
     padding: 6,
     width: 40,
   },
-  // contentWrapper centers the content vertically
-  contentWrapper: {
+
+  // Main Content
+  mainContent: {
     flex: 1,
-    width: '100%',
+    padding: 12,
+    justifyContent: 'flex-start', // Changed from 'center' to 'flex-start'
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    paddingTop: 20, // Add some top padding to prevent overlap
   },
-  gradientCard: {
+
+  // Card Container - Matching Home Page Card Style
+  cardContainer: {
     width: '100%',
-    maxWidth: 400, // Optional: Limit width on larger screens/tablets
-    borderWidth: 2,
-    borderColor: AppColors.primaryGradientStart,
-    borderRadius: 20,
-    padding: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-    backgroundColor: '#fff',
+    maxWidth: 400,
+    minHeight: 450, // Use minHeight instead of aspectRatio for better keyboard behavior
+    maxHeight: 500,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: AppColors.black,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    marginTop: 20, // Added margin to ensure space from header
+  },
+  cardGradient: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+
+  // Card Header
+  cardHeader: {
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  cardIconContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
+  // Card Body
+  cardBody: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: AppColors.white,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+
+  // Logo Section
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
   logoContainer: {
+    position: 'relative',
     alignItems: 'center',
-    marginBottom: 20,
   },
   logoPlaceholder: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#f0f0f0',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: AppColors.primaryGradientStart,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderStyle: 'dashed',
   },
-  logo: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+  logoPlaceholderContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoPlaceholderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 8,
+  },
+  logoImage: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+  },
+  logoOverlay: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
+  // Input Section
+  inputContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    height: 50,
+    width: '100%',
+    maxWidth: 280,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    borderColor: '#ddd',
-    borderWidth: 1,
-    padding: 12,
-    color: '#333',
-    borderRadius: 10, // Slightly more rounded corners
-    marginBottom: 25, // Increased spacing for better look
-    backgroundColor: AppColors.white,
+    flex: 1,
+    color: AppColors.white,
     fontSize: 16,
     fontWeight: '500',
+    paddingVertical: 8,
   },
-  continueButton: {
-    backgroundColor: AppColors.primaryGradientStart,
-    paddingVertical: 15,
-    borderRadius: 12, // Increased rounded corners
+  charCount: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+
+  // Card Button - Matching Home Page Button Style
+  cardButton: {
+    marginTop: 20,
+  },
+  cardButtonDisabled: {
+    opacity: 0.5,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: AppColors.primaryGradientStart,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  continueButtonText: {
+  cardButtonText: {
     color: AppColors.white,
-    fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontSize: 14,
+    marginRight: 8,
   },
 });
 

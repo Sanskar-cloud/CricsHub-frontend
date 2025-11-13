@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -26,6 +25,7 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import apiService from '../APIservices';
+import CustomAlertDialog from '../Customs/CustomDialog.js';
 
 const { height } = Dimensions.get('window');
 
@@ -42,6 +42,15 @@ const AppColors = {
   textLight: '#777777',
   placeholderGray: '#CCC',
   borderLight: '#E8E8E8',
+};
+
+// Define gradient colors for the alert buttons
+const AlertGradients = {
+  primary: ['#4A90E2', '#357ABD'],
+  success: ['#4CAF50', '#45a049'],
+  error: ['#F44336', '#d32f2f'],
+  warning: ['#FFC107', '#ff8f00'],
+  info: ['#17A2B8', '#0288d1']
 };
 
 const DefaultLogo = require("../../assets/defaultLogo.png");
@@ -66,6 +75,15 @@ const AddPlayersToTeam = () => {
   });
   const [addingManualPlayer, setAddingManualPlayer] = useState(false);
 
+  // Custom Alert Dialog States
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    type: 'info',
+    buttons: []
+  });
+
   const navigation = useNavigation();
   const route = useRoute();
   const { teamName, logoUri } = route.params;
@@ -75,6 +93,21 @@ const AddPlayersToTeam = () => {
   const footerTranslateY = useState(new Animated.Value(0))[0];
 
   const roleOptions = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
+
+  // Custom Alert Helper Function
+  const showCustomAlert = (message, type = 'info', buttons = []) => {
+    setAlertConfig({
+      title: '',
+      message,
+      type,
+      buttons: buttons.length > 0 ? buttons : [{ 
+        text: 'OK', 
+        onPress: () => setShowAlert(false),
+        gradientColors: AlertGradients.primary
+      }]
+    });
+    setShowAlert(true);
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -140,9 +173,6 @@ const AddPlayersToTeam = () => {
         apiService({ endpoint: `teams/players/search/phone`, method: 'GET', params: { query } }),
       ]);
       
-      console.log('📊 Name search response:', nameRes);
-      console.log('📊 Phone search response:', phoneRes);
-      
       const nameData = nameRes.success ? nameRes.data.data || [] : [];
       const phoneData = phoneRes.success ? phoneRes.data.data || [] : [];
 
@@ -168,12 +198,12 @@ const AddPlayersToTeam = () => {
 
   const addManualPlayer = async () => {
     if (!manualPlayerData.name.trim()) {
-      Alert.alert('Validation Error', 'Please enter player name');
+      showCustomAlert('Please enter player name', 'warning');
       return;
     }
 
     if (!manualPlayerData.phone.trim()) {
-      Alert.alert('Validation Error', 'Please enter player phone number');
+      showCustomAlert('Please enter player phone number', 'warning');
       return;
     }
 
@@ -193,10 +223,10 @@ const AddPlayersToTeam = () => {
       setManualPlayerData({ name: '', phone: '', role: 'Batsman' });
       setShowManualAddModal(false);
       
-      Alert.alert('Success', 'Player added successfully!', [{ text: 'OK' }]);
+      // showCustomAlert('Player added successfully!', 'success');
 
     } catch (error) {
-      Alert.alert('Error', 'Failed to add player. Please try again.');
+      showCustomAlert('Failed to add player. Please try again.', 'error');
     } finally {
       setAddingManualPlayer(false);
     }
@@ -204,7 +234,7 @@ const AddPlayersToTeam = () => {
 
   const addPlayerToTeam = (player) => {
     if (playerId.includes(player.id)) {
-      Alert.alert("Player Already Added", `${player.name} is already in the team.`, [{ text: "OK", style: 'cancel' }]);
+      showCustomAlert(`${player.name} is already in the team.`, 'warning');
       return;
     }
     setPlayerId((prev) => [...prev, player.id]);
@@ -222,13 +252,9 @@ const AddPlayersToTeam = () => {
 
   const makeCaptain = (id) => {
     const player = teamPlayers.find(p => p.id === id);
-    if (player?.isManual) {
-      Alert.alert("Cannot Assign Captain", "Manually added players cannot be assigned as captain. Please select an existing player.", [{ text: "OK" }]);
-      return;
-    }
     setCaptainId(id);
     setErrorMessage('');
-    Alert.alert("Captain Assigned", `${player?.name || 'Player'} is now the team captain.`, [{ text: "OK", style: 'cancel' }]);
+    // showCustomAlert(`${player?.name || 'Player'} is now the team captain.`, 'success');
   };
 
   const createTeam = async () => {
@@ -240,39 +266,40 @@ const AddPlayersToTeam = () => {
       setErrorMessage('Please assign a captain before creating the team.');
       return;
     }
-
+  
     setCreatingTeam(true);
     setErrorMessage('');
-
+  
     let backendErrorMessage = 'An unexpected error occurred during team creation.';
-
+  
     try {
       const token = await getToken();
       const userId = await getUserUUID();
-
+  
       const existingPlayerIds = teamPlayers.filter(p => !p.isManual).map(p => p.id);
       const manualPlayers = teamPlayers.filter(p => p.isManual);
-
-      console.log('🏏 Starting team creation process...');
-      console.log('📝 Team Name:', teamName);
-      console.log('👑 Captain ID:', captainId);
-      console.log('👥 Existing Player IDs:', existingPlayerIds);
-      console.log('➕ Manual Players:', manualPlayers);
+      const isCaptainManual = teamPlayers.find(p => p.id === captainId)?.isManual;
 
       const formData = new FormData();
       formData.append('name', teamName);
-      formData.append('captainId', captainId);
       
+      if (!isCaptainManual) {
+        formData.append('captainId', captainId);
+      }
+  
       existingPlayerIds.forEach(playerId => {
         formData.append('playerIds', playerId);
       });
-
+  
       manualPlayers.forEach((player, index) => {
         formData.append(`addPlayerRequestDto[${index}].name`, player.name);
         formData.append(`addPlayerRequestDto[${index}].phone`, player.phone);
         formData.append(`addPlayerRequestDto[${index}].role`, player.role);
+        
+        const isThisPlayerCaptain = player.id === captainId;
+        formData.append(`addPlayerRequestDto[${index}].isCaptain`, isThisPlayerCaptain.toString());
       });
-
+  
       if (logoUri) {
         const fileName = logoUri.split('/').pop();
         const fileType = fileName.split('.').pop();
@@ -282,39 +309,45 @@ const AddPlayersToTeam = () => {
           type: `image/${fileType}`
         });
       }
-
-      console.log('🚀 Making API call to create team...');
-      console.log('🔗 Endpoint: /api/v1/teams');
-      console.log('📋 Method: POST');
-      console.log('📦 Content-Type: multipart/form-data');
-
+      manualPlayers.forEach((player, index) => {
+        console.log(`  - addPlayerRequestDto[${index}]:`, {
+          name: player.name,
+          phone: player.phone,
+          role: player.role,
+          isCaptain: player.id === captainId
+        });
+      });
+  
       const response = await apiService({
         endpoint: `teams`,
         method: 'POST',
         body: formData,
         isMultipart: true
       });
-
-      console.log('📥 Team creation response:', response);
-
+  
       if (response.success) {
         console.log('✅ Team created successfully!');
         setTeamPlayers([]);
         setPlayerId([]);
         setCaptainId(null);
-        Alert.alert('Success', 'Team created successfully!', [{ 
-          text: 'OK', 
-          onPress: () => navigation.navigate('Teams') 
-        }]);
+        
+        showCustomAlert('Team created successfully!', 'success', [
+          { 
+            text: 'OK', 
+            onPress: () => {
+              setShowAlert(false);
+              navigation.navigate('Teams');
+            },
+            gradientColors: AlertGradients.success
+          }
+        ]);
       } else {
         backendErrorMessage = response.error?.message || 'Failed to create team. No specific message provided.';
-        console.error('❌ Team creation failed:', response);
-        Alert.alert('Error', backendErrorMessage);
+        showCustomAlert(backendErrorMessage, 'error');
         setErrorMessage(backendErrorMessage);
       }
     } catch (e) {
-      console.error('💥 Team creation exception:', e);
-      Alert.alert('Error', backendErrorMessage);
+      showCustomAlert(backendErrorMessage, 'error');
       setErrorMessage(backendErrorMessage);
     } finally {
       setCreatingTeam(false);
@@ -357,7 +390,7 @@ const AddPlayersToTeam = () => {
           />
           {captainId === item.id && (
             <View style={styles.captainBadge}>
-              <FontAwesome name="crown" size={10} color={AppColors.warning} />
+              <FontAwesome name="star" size={10} color={AppColors.warning} />
             </View>
           )}
           {item.isManual && (
@@ -383,19 +416,15 @@ const AddPlayersToTeam = () => {
         <TouchableOpacity
           style={[
             styles.captainButton, 
-            captainId === item.id && styles.activeCaptainButton,
-            item.isManual && styles.disabledCaptainButton
+            captainId === item.id && styles.activeCaptainButton
           ]}
           onPress={() => makeCaptain(item.id)}
-          disabled={captainId === item.id || item.isManual}
+          disabled={captainId === item.id}
         >
           <FontAwesome 
-            name={captainId === item.id ? "crown" : "star"} 
+            name={captainId === item.id ? "star" : "star"} 
             size={16} 
-            color={
-              item.isManual ? AppColors.placeholderGray :
-              captainId === item.id ? AppColors.warning : AppColors.primary
-            } 
+            color={captainId === item.id ? AppColors.warning : AppColors.primary} 
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => removePlayerFromTeam(item.id)} style={styles.deleteButton}>
@@ -440,7 +469,7 @@ const AddPlayersToTeam = () => {
           <View style={styles.modalNote}>
             <Ionicons name="information-circle" size={18} color={AppColors.info} />
             <Text style={styles.modalNoteText}>
-              Note: Manually added players cannot be assigned as team captain
+              Note: You can assign captain to both existing and manually added players.
             </Text>
           </View>
 
@@ -552,7 +581,7 @@ const AddPlayersToTeam = () => {
               <View style={styles.infoNoteContent}>
                 <Ionicons name="information-circle-outline" size={20} color={AppColors.info} />
                 <Text style={styles.infoNoteText}>
-                  You can add players by searching or manually. Manually added players cannot be assigned as captain.
+                  You can add players by searching or manually. Captain can be assigned to any player.
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setShowInfoNote(false)} style={styles.infoNoteClose}>
@@ -618,7 +647,7 @@ const AddPlayersToTeam = () => {
               <Text style={styles.sectionTitle}>Team Players ({teamPlayers.length})</Text>
               {captainId && (
                 <View style={styles.captainIndicator}>
-                  <FontAwesome name="crown" size={12} color={AppColors.warning} />
+                  <FontAwesome name="star" size={12} color={AppColors.warning} />
                   <Text style={styles.captainIndicatorText}>Captain Selected</Text>
                 </View>
               )}
@@ -676,10 +705,20 @@ const AddPlayersToTeam = () => {
 
       {/* Manual Add Modal */}
       {renderManualAddModal()}
+
+      {/* Custom Alert Dialog */}
+      <CustomAlertDialog
+        visible={showAlert}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={alertConfig.buttons}
+        onClose={() => setShowAlert(false)}
+      />
     </SafeAreaView>
   );
 };
 
+// ... Keep all your existing styles the same ...
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -732,6 +771,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: AppColors.primary,
   },
+  // ... Rest of your styles remain exactly the same ...
   // Info Note
   infoNote: {
     backgroundColor: '#E8F4FD',
